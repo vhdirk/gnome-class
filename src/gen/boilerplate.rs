@@ -32,7 +32,10 @@ impl<'ast> ClassContext<'ast> {
         let imp_new_fn_name                  = self.imp_new_fn_name();
 
         let slots                            = self.slots();
-        // let signal_id_names                  = self.signal_id_names();
+
+        let names                            = self.signal_id_names();
+        let signal_id_names                  = &names; // reference, otherwise quote! will consume the vector
+
         let slot_default_handlers            = self.imp_slot_default_handlers();
         let slot_assignments                 = self.slot_assignments();
         let signal_declarations              = self.signal_declarations();
@@ -142,7 +145,9 @@ impl<'ast> ClassContext<'ast> {
                     struct #PrivateClassName {
                         parent_class: *const #ParentClassFfi,
                         // properties:   *const Vec<*const gobject_ffi::GParamSpec>,
-                        // signals:      *const Vec<u32>
+
+                        // signal ids
+                        #(#signal_id_names: u32,)*
                     }
 
                     static mut PRIV: #PrivateClassName = #PrivateClassName {
@@ -150,7 +155,9 @@ impl<'ast> ClassContext<'ast> {
                         // function calls to set constants is feature-gated.
                         parent_class: 0 as *const _,
                         // properties:   0 as *const _,
-                        // signals:      0 as *const _,
+
+                        // signal ids
+                        #(#signal_id_names: 0,)*
                     };
 
                     // We are inside the "mod imp".  We will create function
