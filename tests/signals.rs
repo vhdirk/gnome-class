@@ -1,7 +1,7 @@
 #![feature(proc_macro)]
 
 extern crate gobject_gen;
-// extern crate gobject_sys;
+extern crate gobject_sys;
 
 #[macro_use]
 extern crate glib;
@@ -51,17 +51,16 @@ gobject_gen! {
 }
 
 #[test]
-#[ignore] // We don't create signals yet
 fn has_value_changed_signal() {
     let obj: Signaler = Signaler::new();
     let obj_type = obj.get_type().to_glib();
 
     unsafe {
-        let mut n_ids: libc::c_uint = mem::zeroed();
+        let mut n_ids: libc::c_uint = 0;
 
         let raw_signal_ids = gobject_sys::g_signal_list_ids(obj_type, &mut n_ids);
         assert_eq!(n_ids, 1);
-
+/*
         let n_ids = n_ids as usize;
 
         let signal_ids = slice::from_raw_parts(raw_signal_ids, n_ids);
@@ -74,5 +73,6 @@ fn has_value_changed_signal() {
 
         let signal_name = CStr::from_ptr(query.signal_name);
         assert_eq!(signal_name.to_str().unwrap(), "value-changed");
+*/
   }
 }
