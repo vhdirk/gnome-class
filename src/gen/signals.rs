@@ -54,32 +54,26 @@ impl<'ast> ClassContext<'ast> {
         Vec::new()
     }
 
-    /*
-    /// From a signal called `foo`, generate `foo_signal_id`.  This is used to
-    /// store the signal ids from g_signal_newv() in the Class structure.
-    fn signal_id_name(signal: &Signal) -> Ident {
-        Ident::from(&format!("{}_signal_id", signal.name.as_ref()))
-    }
-    */
-
     pub fn signal_id_names(&self) -> Vec<Ident> {
-        /*
         self.signals()
             .map(|signal| signal_id_name (signal))
             .collect()
-         */
-        Vec::new()
     }
 
-    /*
-    pub fn signals(&self) -> impl Iterator<Item = &'ast Signal> {
+    pub fn signals(&'ast self) -> impl Iterator<Item = &'ast Signal> {
         self.class
-            .items
+            .slots
             .iter()
-            .filter_map(|item| match *item {
-                ClassItem::Signal(ref s) => Some(s),
+            .filter_map(|slot| match *slot {
+                Slot::Signal(ref s) => Some(s),
                 _ => None,
             })
     }
-    */
 }
+
+/// From a signal called `foo`, generate `foo_signal_id`.  This is used to
+/// store the signal ids from g_signal_newv() in the Class structure.
+fn signal_id_name<'ast>(signal: &'ast Signal) -> Ident {
+    Ident::from(format!("{}_signal_id", signal.sig.name.as_ref()))
+}
+
