@@ -19,6 +19,10 @@ impl Synom for ast::Program {
             items: items
         })
     ));
+
+    fn description() -> Option<&'static str> {
+        Some("gobject_gen program")
+    }
 }
 
 impl Synom for ast::Item {
@@ -27,6 +31,10 @@ impl Synom for ast::Item {
         |
         syn!(ast::Impl) => { |x| ast::Item::Impl(x) }
     ));
+
+    fn description() -> Option<&'static str> {
+        Some("item")
+    }
 }
 
 // class Foo [: SuperClass [, ImplementsIface]*] {
@@ -54,12 +62,20 @@ impl Synom for ast::Class {
             items:   items_and_braces.1
         })
     ));
+
+    fn description() -> Option<&'static str> {
+        Some("class item")
+    }
 }
 
 impl Synom for ast::ClassItem {
     named!(parse -> Self, alt!(
         syn!(ast::InstancePrivateItem) => { |x| ast::ClassItem::InstancePrivate(x) }
     ));
+
+    fn description() -> Option<&'static str> {
+        Some("item inside class")
+    }
 }
 
 impl Synom for ast::InstancePrivateItem {
@@ -76,6 +92,10 @@ impl Synom for ast::InstancePrivateItem {
             semi_token: semi
         })
     ));
+
+    fn description() -> Option<&'static str> {
+        Some("InstancePrivate type")
+    }
 }
 
 impl Synom for ast::Impl {
@@ -94,6 +114,10 @@ impl Synom for ast::Impl {
             items: body.1
         })
     ));
+
+    fn description() -> Option<&'static str> {
+        Some("impl item")
+    }
 }
 
 impl Synom for ast::ImplItem {
@@ -102,6 +126,10 @@ impl Synom for ast::ImplItem {
         node: syn!(ast::ImplItemKind) >>
         (ast::ImplItem { attrs, node })
     ));
+
+    fn description() -> Option<&'static str> {
+        Some("item inside impl")
+    }
 }
 
 impl Synom for ast::ImplItemKind {
@@ -114,6 +142,10 @@ impl Synom for ast::ImplItemKind {
             (ast::ImplItemKind::ReserveSlots(slots.1))
         )
     ));
+
+    fn description() -> Option<&'static str> {
+        Some("item inside impl")
+    }
 }
 
 impl Synom for ast::ImplItemMethod {
@@ -140,6 +172,10 @@ impl Synom for ast::ImplItemMethod {
             body,
         })
     ));
+
+    fn description() -> Option<&'static str> {
+        Some("method or signal")
+    }
 }
 
 /// Creates a parsing function for use with synom's call!().  For
