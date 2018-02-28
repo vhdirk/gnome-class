@@ -19,6 +19,7 @@ extern crate rustfmt;
 extern crate syn;
 
 use proc_macro::TokenStream;
+use std::error::Error;
 use errors::*;
 
 macro_rules! quote_cs {
@@ -201,16 +202,23 @@ pub fn gobject_gen(input: TokenStream) -> TokenStream {
                     tokens.into()
                 },
                 Err(e) => {
-                    println!("{}", e.0);
-                    panic!("cannot generate gobjects")
+                    error_to_compile_error(&e.0)
                 }
             }
         },
         Err(e) => {
-            println!("{:?}", e);
-            panic!("cannot generate gobjects")
+            error_to_compile_error(&e)
         }
     }
+}
+
+fn error_to_compile_error<E: Error>(e: &E) -> TokenStream {
+    let desc = e.description();
+    let tokens = quote! {
+        compile_error!(#desc);
+    };
+
+    tokens.into()
 }
 
 #[proc_macro]
