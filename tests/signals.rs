@@ -35,9 +35,8 @@ gobject_gen! {
     }
 
     impl Signaler {
-        // signal value_changed(&self);
+        signal fn value_changed(&self);
 
-        /*
         fn set_value(&self, v: u32) {
             let private = self.get_priv();
             private.val.set(v);
@@ -48,7 +47,6 @@ gobject_gen! {
             let private = self.get_priv();
             private.val.get()
         }
-        */
     }
 }
 
@@ -58,7 +56,6 @@ fn has_value_changed_signal() {
     let obj: Signaler = Signaler::new();
     let obj_type = obj.get_type().to_glib();
 
-    /*
     unsafe {
         let mut n_ids: libc::c_uint = mem::zeroed();
 
@@ -78,5 +75,4 @@ fn has_value_changed_signal() {
         let signal_name = CStr::from_ptr(query.signal_name);
         assert_eq!(signal_name.to_str().unwrap(), "value-changed");
   }
-  */
 }
