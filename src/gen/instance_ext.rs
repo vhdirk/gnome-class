@@ -24,7 +24,7 @@ impl<'ast> ClassContext<'ast> {
                         })
                     }
 
-                    Slot::Signal(_) => panic!("signals not implemented"),
+                    Slot::Signal(_) => None, // panic!("signals not implemented"),
                 }
             })
             .collect()
@@ -59,7 +59,7 @@ impl<'ast> ClassContext<'ast> {
                         })
                     }
 
-                    Slot::Signal(_) => panic!("signals not implemented"),
+                    Slot::Signal(_) => None, // panic!("signals not implemented"),
                 }
             })
             .collect()

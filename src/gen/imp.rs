@@ -30,7 +30,7 @@ impl<'ast> ClassContext<'ast> {
                         })
                     }
 
-                    Slot::Signal(_) => panic!("signals not implemented"),
+                    Slot::Signal(_) => None, // panic!("signals not implemented"),
                 }
             })
             .collect()
@@ -69,7 +69,7 @@ impl<'ast> ClassContext<'ast> {
                         }
                     },
 
-                    Slot::Signal(_) => panic!("signals not implemented"),
+                    Slot::Signal(_) => quote!{}, // panic!("signals not implemented"),
                 }
             })
             .collect::<Vec<_>>();
@@ -130,7 +130,7 @@ impl<'ast> ClassContext<'ast> {
                         Some(tokens(sig, None))
                     },
 
-                    Slot::Signal(_) => panic!("signals not implemented"),
+                    Slot::Signal(_) => None, // panic!("signals not implemented"),
                 }
             })
             .collect::<Vec<_>>();
@@ -216,7 +216,7 @@ impl<'ast> ClassContext<'ast> {
                         })
                     }
 
-                    Slot::Signal(_) => panic!("signals not implemented"),
+                    Slot::Signal(_) => None, // panic!("signals not implemented"),
                 }
             })
             .collect()
@@ -248,7 +248,7 @@ impl<'ast> ClassContext<'ast> {
                         })
                     }
 
-                    Slot::Signal(_) => panic!("signals not implemented"),
+                    Slot::Signal(_) => None, // panic!("signals not implemented"),
                 }
             })
             .collect::<Vec<_>>();
