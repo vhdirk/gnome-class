@@ -52,7 +52,7 @@ pub struct Class<'ast> {
 pub enum Slot<'ast> {
     Method(Method<'ast>),
     VirtualMethod(VirtualMethod<'ast>),
-    Signal(Signal)
+    Signal(Signal<'ast>)
 }
 
 pub struct Method<'ast> {
@@ -81,8 +81,10 @@ pub enum FnArg<'ast> {
     }
 }
 
-pub struct Signal {
+pub struct Signal<'ast> {
     // FIXME: signal flags
+    pub sig: FnSig<'ast>,
+    pub body: Option<&'ast Block>,
 }
 
 pub enum Ty<'ast> {
@@ -220,9 +222,23 @@ impl<'ast> Class<'ast> {
         -> Result<Slot<'ast>>
     {
         if method.signal {
-            panic!("signals not implemented");
-        }
-        if method.virtual_ {
+            if method.public {
+                bail!("function `{}` is a signal so it doesn't need to be public",
+                      method.name)
+            }
+
+            if method.virtual_ {
+                bail!("function `{}` is a signal so it doesn't need to be virtual",
+                      method.name)
+            }
+
+            let sig = self.extract_sig(method)?;
+            Ok(Slot::Signal(Signal {
+                // FIXME: signal flags
+                sig,
+                body: method.body.as_ref(),
+            }))
+        } else if method.virtual_ {
             if method.public {
                 bail!("function `{}` is virtual so it doesn't need to be public",
                       method.name)
