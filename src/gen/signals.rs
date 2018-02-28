@@ -1,4 +1,5 @@
 use super::*;
+use self::cstringident::CStringIdent;
 
 impl<'ast> ClassContext<'ast> {
     pub fn signal_trampolines(&self) -> Vec<Tokens> {
@@ -22,7 +23,6 @@ impl<'ast> ClassContext<'ast> {
     }
 
     pub fn signal_declarations(&self) -> Vec<Tokens> {
-        /*
         self.signals()
             .map(|signal| {
                 // FIXME: we are not specifying the proper signature (return, args) for the signal
@@ -32,12 +32,13 @@ impl<'ast> ClassContext<'ast> {
                 //
                 // FIXME: We are not passing a class_closure, marshaller, etc.
 
+                let get_type_fn_name = self.instance_get_type_fn_name();
                 let signal_id_name = signal_id_name(&signal);
-                let signal_name = CStringIdent(signal.name);
+                let signal_name = CStringIdent(signal.sig.name);
                 quote_cs! {
-                    PRIV.signals[signal_id_name] =
+                    PRIV.#signal_id_name =
                         gobject_sys::g_signal_newv (#signal_name as *const u8 as *const i8,
-                                                    (*g_object_class).g_type_class.g_type,
+                                                    #get_type_fn_name(),
                                                     gobject_sys::G_SIGNAL_RUN_FIRST, // flags
                                                     ptr::null_mut(),                 // class_closure,
                                                     None,                            // accumulator
@@ -50,8 +51,6 @@ impl<'ast> ClassContext<'ast> {
                 }
             })
             .collect()
-         */
-        Vec::new()
     }
 
     pub fn signal_id_names(&self) -> Vec<Ident> {

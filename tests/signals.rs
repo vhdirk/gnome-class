@@ -60,7 +60,7 @@ fn has_value_changed_signal() {
 
         let raw_signal_ids = gobject_sys::g_signal_list_ids(obj_type, &mut n_ids);
         assert_eq!(n_ids, 1);
-/*
+
         let n_ids = n_ids as usize;
 
         let signal_ids = slice::from_raw_parts(raw_signal_ids, n_ids);
@@ -73,6 +73,5 @@ fn has_value_changed_signal() {
 
         let signal_name = CStr::from_ptr(query.signal_name);
         assert_eq!(signal_name.to_str().unwrap(), "value-changed");
-*/
   }
 }
