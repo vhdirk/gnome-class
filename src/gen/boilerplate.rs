@@ -134,14 +134,6 @@ impl<'ast> ClassContext<'ast> {
                     //     // FIXME - do not emit this enum at all if there are no properties
                     // }
 
-                    // #[repr(u32)]
-                    // enum Signals {
-                    //     FIXMEDummy = 0,
-                    //     // first one starts at 0
-                    //     // FIXME - do not emit this enum at all if there are no signals
-                    //     // #(#signal_id_names),*
-                    // }
-
                     struct #PrivateClassName {
                         parent_class: *const #ParentClassFfi,
                         // properties:   *const Vec<*const gobject_ffi::GParamSpec>,
