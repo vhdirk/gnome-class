@@ -109,7 +109,7 @@ fn signal_id_name<'ast>(signal: &'ast Signal) -> Ident {
 /// From a signal called `foo` generate a `foo_trampoline` identifier.  This is used
 /// for the functions that get passed to g_signal_connect().
 pub fn signal_trampoline_name(signal: &Signal) -> Ident {
-    Ident::from(format!("{}_trampoline", signal.sig.name.as_ref()))
+    Ident::from(format!("{}_signal_handler_trampoline", signal.sig.name.as_ref()))
 }
 
 /// From a signal called `foo` generate a `connect_foo` identifier.  This is used

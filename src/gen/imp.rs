@@ -233,7 +233,7 @@ impl<'ast> ClassContext<'ast> {
     }
 
     fn slot_trampoline_name(slot_name: &Ident) -> Ident {
-        Ident::from(format!("{}_trampoline", slot_name.as_ref()))
+        Ident::from(format!("{}_slot_trampoline", slot_name.as_ref()))
     }
 
     fn slot_impl_name(slot_name: &Ident) -> Ident {
