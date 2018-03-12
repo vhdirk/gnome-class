@@ -40,7 +40,7 @@ impl<'ast> ClassContext<'ast> {
         let slot_assignments                 = self.slot_assignments();
         let signal_declarations              = self.signal_declarations();
 
-        let instance_method_trampolines      = self.instance_method_trampolines();
+        let instance_slot_trampolines        = self.instance_slot_trampolines();
         let instance_name_string             = CStringIdent(*InstanceName);
 
         let imp_extern_methods               = self.imp_extern_methods();
@@ -191,7 +191,7 @@ impl<'ast> ClassContext<'ast> {
 
                         // FIXME: get_property() handler
 
-                        #(#instance_method_trampolines)*
+                        #(#instance_slot_trampolines)*
                     }
 
                     impl #ClassName {
