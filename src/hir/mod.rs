@@ -66,6 +66,17 @@ pub struct VirtualMethod<'ast> {
     pub body: Option<&'ast Block>,
 }
 
+/// Represents a slot signature (method or signal).
+///
+/// This is different from syn::FnDecl because GObject slots only support a subset
+/// of the things that Rust does.  This is encoded in our `FnArg` type for arguments
+/// and the `Ty` for the return type.
+///
+/// `FnSig` has a number of convenience methods that return an `impl
+/// ToTokens`, for when you need to emit code for different aspects of
+/// the `FnSig`:  the Glib type that corresponds to the function's
+/// return value, the input arguments with Glib types, the input
+/// arguments converted *from* Glib types, and so on.
 pub struct FnSig<'ast> {
     pub name: Ident,
     pub inputs: Vec<FnArg<'ast>>,
