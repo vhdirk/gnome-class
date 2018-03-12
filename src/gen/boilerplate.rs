@@ -45,8 +45,7 @@ impl<'ast> ClassContext<'ast> {
 
         let imp_extern_methods               = self.imp_extern_methods();
 
-        let method_trait_fns                 = &self.method_trait_fns();
-        let signal_connect_trait_fns         = &self.signal_connect_trait_fns();
+        let slot_trait_fns                   = &self.slot_trait_fns();
         let signal_connect_impl_fns          = &self.signal_connect_impl_fns();
         let method_redirects                 = self.method_redirects();
         let signal_trampolines               = self.signal_trampolines();
@@ -288,9 +287,7 @@ impl<'ast> ClassContext<'ast> {
                 }
 
                 pub trait #InstanceExt {
-                    #(#method_trait_fns)*
-
-                    #(#signal_connect_trait_fns)*
+                    #(#slot_trait_fns)*
 
                     // FIXME: property setters/getters like in glib-rs
                     //
