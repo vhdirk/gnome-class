@@ -1,4 +1,5 @@
 use super::*;
+use super::signals;
 
 impl<'ast> ClassContext<'ast> {
     /// Returns, for each method, something like
@@ -6,7 +7,13 @@ impl<'ast> ClassContext<'ast> {
     /// ```notest
     /// fn foo(&self, arg: u32);
     /// ```
-    pub fn method_trait_fns(&self) -> Vec<Tokens> {
+    ///
+    /// Or for signals, something like
+    ///
+    /// ```notest
+    /// fn connect_foo<F: Fn(&Self, arg: u32) + 'static>(&self, f: F) -> glib::SignalHandlerId
+    /// ```
+    pub fn slot_trait_fns(&self) -> Vec<Tokens> {
         self.class
             .slots
             .iter()
@@ -24,7 +31,16 @@ impl<'ast> ClassContext<'ast> {
                         })
                     }
 
-                    Slot::Signal(_) => None, // panic!("signals not implemented"),
+                    Slot::Signal(ref signal) => {
+                        let connect_signalname = signals::connect_signalname(signal);
+                        let sig = &signal.sig;
+                        let inputs = &sig.inputs[1..]; // remove the &self, because we need &Self below
+                        let output = &sig.output;
+                        Some(quote_cs! {
+                            fn #connect_signalname<F: Fn(&Self, #(#inputs),*) -> #output + 'static>(&self, f: F) ->
+                                glib::SignalHandlerId;
+                        })
+                    },
                 }
             })
             .collect()

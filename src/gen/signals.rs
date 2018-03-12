@@ -2,24 +2,6 @@ use super::*;
 use self::cstringident::CStringIdent;
 
 impl<'ast> ClassContext<'ast> {
-    /// Generates connect_signalname() function prototypes for the InstanceExt trait
-    ///
-    /// These are the `trait InstanceExt { fn connect_signalname(...); }` functions.
-    ///
-    /// We generate their implementation in `signal_connect_impl_fns()` below.
-    pub fn signal_connect_trait_fns(&self) -> Vec<Tokens> {
-        self.signals()
-            .map(|signal| {
-                let connect_signalname = connect_signalname(signal);
-                quote_cs! {
-                    // FIXME: argument types inside the Fn
-                    // FIXME: return type for the Fn or unit
-                    fn #connect_signalname<F: Fn(&Self) -> () + 'static>(&self, f: F) -> glib::SignalHandlerId;
-                }
-            })
-            .collect()
-    }
-
     /// Generates connect_signalname() impls for the InstanceExt implementation.
     ///
     /// These call glib::signal::connect() with our generated
@@ -166,6 +148,6 @@ fn signal_trampoline_name(signal: &Signal) -> Ident {
 
 /// From a signal called `foo` generate a `connect_foo` identifier.  This is used
 /// for the public methods in the InstanceExt trait.
-fn connect_signalname(signal: &Signal) -> Ident {
+pub fn connect_signalname(signal: &Signal) -> Ident {
     Ident::from(format!("connect_{}", signal.sig.name.as_ref()))
 }
