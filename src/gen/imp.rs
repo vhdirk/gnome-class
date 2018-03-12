@@ -172,11 +172,6 @@ impl<'ast> ClassContext<'ast> {
         return ret
     }
 
-    pub fn instance_method_impls(&self) -> Vec<Tokens> {
-        // FIXME
-        Vec::new()
-    }
-
     pub fn imp_extern_methods(&self) -> Vec<Tokens> {
         let InstanceName = self.InstanceName;
         let InstanceNameFfi = self.InstanceNameFfi;
