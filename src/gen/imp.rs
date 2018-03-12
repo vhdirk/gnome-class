@@ -108,7 +108,7 @@ impl<'ast> ClassContext<'ast> {
         return ret
     }
 
-    pub fn instance_method_trampolines(&self) -> Vec<Tokens> {
+    pub fn instance_slot_trampolines(&self) -> Vec<Tokens> {
         let callback_guard = glib_callback_guard();
         let InstanceName = self.InstanceName;
         let InstanceNameFfi = self.InstanceNameFfi;
