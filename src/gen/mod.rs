@@ -121,26 +121,74 @@ impl<'ast> ClassContext<'ast> {
 }
 
 impl<'ast> FnSig<'ast> {
+    /// Generates the Glib type name of the function's return value
+    ///
+    /// For example, if the `FnSig` represents a `fn foo(...) ->
+    /// bool`, then this function will generate something that
+    /// resolves to `glib_sys::gboolean`.
     fn output_glib_type<'a>(&'a self) -> impl ToTokens + 'a {
         ToGlibType(&self.output, self)
     }
 
+    /// Generates an argument list with Glib types suitable for function prototypes, without the `&self`
+    ///
+    /// For example, if the `FnSig` represents a `fn foo(&self, a: bool, b: i32)`, then this
+    /// function will generate tokens for `a: glib_sys::boolean, b: i32,`.  This is useful when generating
+    /// a prototype for an `unsafe extern "C" fn` callable from C.
+    ///
+    /// Note that the first parameter `&self` is omitted.  This is so that callers
+    /// can emit a suitable C pointer instead of a Rust `&self`.
     fn input_args_with_glib_types<'a>(&'a self) -> impl ToTokens + 'a {
         FnArgsWithGlibTypes(self)
     }
 
+    /// Generates an argument list with values converted from Glib types, without the `&self`
+    ///
+    /// For example, if the `FnSig` represents a `fn foo(&self, a:
+    /// bool, b: i32)`, then this function will generate tokens for
+    /// `<bool as FromGlib<_>>::from_glib(a), b,`.  Presumably the
+    /// generated tokens are being used in a function call from C to
+    /// Rust.
+    ///
+    /// Note that the first parameter `&self` is omitted.  This is so that the caller
+    /// can emit the tokens for the first argument as appropriate.
     fn input_args_from_glib_types<'a>(&'a self) -> impl ToTokens + 'a {
         ArgNamesFromGlib(&self.inputs[1..])
     }
 
+    /// Generates an argument list with values converted to Glib types, without the `&self`
+    ///
+    /// For example, if the `FnSig` represents a `fn foo(&self, a:
+    /// bool, b: i32)`, then this function will generate tokens for
+    /// `<bool as ToGlib>::to_glib(&a), b,`.  Presumably the generated
+    /// tokens are being used in a function call from Rust to C.
+    ///
+    /// Note that the first parameter `&self` is omitted.  This is so that the caller
+    /// can emit the tokens for the first argument as appropriate.
     fn input_args_to_glib_types<'a>(&'a self) -> impl ToTokens + 'a {
         ArgNamesToGlib(&self.inputs[1..])
     }
 
+    /// Generates a list of argument names with no type conversions, without the `&self`
+    ///
+    /// For example, if the `FnSig` represents a `fn foo(&self, a:
+    /// bool, b: i32)`, then this function will generate tokens for
+    /// `a, b,`.  This is just to pass through arguments from inside a
+    /// wrapper function.
+    ///
+    /// Note that the first parameter `&self` is omitted.  This is so that the caller
+    /// can emit the tokens for the first argument as appropriate.
     fn input_arg_names<'a>(&'a self) -> impl ToTokens + 'a {
         ArgNames(&self.inputs[1..])
     }
 
+    /// Generates the conversion from a Rust return value into a Glib value
+    ///
+    /// For example, if the `FnSig` has an `output` type of `bool`,
+    /// and the `tokens` correspond to `true`, this function will
+    /// generate `<bool as ToGlib>::to_glib(&true)`.  This can be used
+    /// by code which generates a function callable from C that wraps
+    /// Rust code.
     fn ret_to_glib<'a, T: ToTokens + 'a>(&'a self, tokens: T) -> impl ToTokens + 'a {
         ToGlib(&self.output, tokens)
     }
