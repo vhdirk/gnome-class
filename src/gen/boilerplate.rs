@@ -46,8 +46,7 @@ impl<'ast> ClassContext<'ast> {
         let imp_extern_methods               = self.imp_extern_methods();
 
         let slot_trait_fns                   = &self.slot_trait_fns();
-        let signal_connect_impl_fns          = &self.signal_connect_impl_fns();
-        let method_redirects                 = self.method_redirects();
+        let slot_trait_impls                 = self.slot_trait_impls();
         let signal_trampolines               = self.signal_trampolines();
 
         let parent_instance_tokens = if self.class.gobject_parent {
@@ -297,9 +296,7 @@ impl<'ast> ClassContext<'ast> {
                 }
 
                 impl<O: IsA<#InstanceName> + IsA<glib::object::Object>> #InstanceExt for O {
-                    #(#method_redirects)*
-
-                    #(#signal_connect_impl_fns)*
+                    #(#slot_trait_impls)*
 
                     // FIXME: property setters/getters like in glib-rs
                     //
