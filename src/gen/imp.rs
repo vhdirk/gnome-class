@@ -13,11 +13,12 @@ impl<'ast> ClassContext<'ast> {
             .slots
             .iter()
             .filter_map(|slot| {
+                let InstanceNameFfi = &self.InstanceNameFfi;
+
                 match *slot {
                     Slot::Method(_) => None,
 
                     Slot::VirtualMethod(VirtualMethod { ref sig, .. }) => {
-                        let InstanceNameFfi = &self.InstanceNameFfi;
                         let output = sig.output_glib_type();
                         let inputs = sig.input_args_with_glib_types();
                         let name = sig.name;
@@ -28,9 +29,18 @@ impl<'ast> ClassContext<'ast> {
                             ) -> #output>,
 
                         })
-                    }
+                    },
 
-                    Slot::Signal(_) => None, // panic!("signals not implemented"),
+                    Slot::Signal(ref signal) => {
+                        let signalname = signal.sig.name;
+
+                        Some(quote_cs! {
+                            pub #signalname: Option<unsafe extern "C" fn(
+                                this: *mut #InstanceNameFfi,
+                                // FIXME: signal arguments
+                            ) -> ()>, // FIXME: signal return value or unit
+                        })
+                    },
                 }
             })
             .collect()
