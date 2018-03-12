@@ -2,6 +2,28 @@ use super::*;
 use self::cstringident::CStringIdent;
 
 impl<'ast> ClassContext<'ast> {
+    /// Generates connect_signalname() function prototypes for the InstanceExt trait
+    pub fn signal_connect_trait_fns(&self) -> Vec<Tokens> {
+        // FIXME: methods to connect to signals like in glib-rs
+        //
+        // fn connect_signalname<F: Fn(&Self, type, type) -> type + 'static>(&self, f: F) -> glib::SignalHandlerId;
+        Vec::new()
+    }
+
+    /// Generates connect_signalname() impls for the InstanceExt implementation
+    pub fn signal_connect_impl_fns(&self) -> Vec<Tokens> {
+        // FIXME: methods to connect to signals like in glib-rs
+        //
+        // fn connect_signalname<F: Fn(&Self, type, type) -> type + 'static>(&self, f: F) -> glib::SignalHandlerId {
+        //     unsafe {
+        //         let f: Box_<Box_<Fn(&Self, type, type) -> type + 'static>> = Box_::new(Box_::new(f));
+        //         connect(self.to_glib_none().0, "signalname",
+        //             transmute(signalname_trampoline::<Self> as usize), Box_::into_raw(f) as *mut _)
+        //     }
+        // }
+        Vec::new()
+    }
+
     pub fn signal_trampolines(&self) -> Vec<Tokens> {
         // FIXME: signal handler trampolines like in glib-rs
         //

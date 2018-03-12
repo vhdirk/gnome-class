@@ -49,6 +49,8 @@ impl<'ast> ClassContext<'ast> {
         let imp_extern_methods               = self.imp_extern_methods();
 
         let method_trait_fns                 = &self.method_trait_fns();
+        let signal_connect_trait_fns         = &self.signal_connect_trait_fns();
+        let signal_connect_impl_fns          = &self.signal_connect_impl_fns();
         let method_redirects                 = self.method_redirects();
         let signal_trampolines               = self.signal_trampolines();
 
@@ -298,19 +300,19 @@ impl<'ast> ClassContext<'ast> {
                 pub trait #InstanceExt {
                     #(#method_trait_fns)*
 
+                    #(#signal_connect_trait_fns)*
+
                     // FIXME: property setters/getters like in glib-rs
                     //
                     // fn get_property_foo(&self) -> type;
                     //
                     // fn set_property_foo(&self, v: type);
-
-                    // FIXME: methods to connect to signals like in glib-rs
-                    //
-                    // fn connect_signalname<F: Fn(&Self, type, type) -> type + 'static>(&self, f: F) -> u64;
                 }
 
                 impl<O: IsA<#InstanceName> + IsA<glib::object::Object>> #InstanceExt for O {
                     #(#method_redirects)*
+
+                    #(#signal_connect_impl_fns)*
 
                     // FIXME: property setters/getters like in glib-rs
                     //
@@ -325,16 +327,6 @@ impl<'ast> ClassContext<'ast> {
                     // fn set_property_foo(&self, v: type) {
                     //     unsafe {
                     //         gobject_ffi:g_object_set_property(self.to_glib_none().0, "foo".to_glib_none().0, Value::from(&v).to_glib_none().0);
-                    //     }
-                    // }
-
-                    // FIXME: methods to connect to signals like in glib-rs
-                    //
-                    // fn connect_signalname<F: Fn(&Self, type, type) -> type + 'static>(&self, f: F) -> u64 {
-                    //     unsafe {
-                    //         let f: Box_<Box_<Fn(&Self, type, type) -> type + 'static>> = Box_::new(Box_::new(f));
-                    //         connect(self.to_glib_none().0, "signalname",
-                    //             transmute(signalname_trampoline::<Self> as usize), Box_::into_raw(f) as *mut _)
                     //     }
                     // }
                 }
