@@ -14,17 +14,18 @@ impl<'ast> ClassContext<'ast> {
         self.signals()
             .map(|signal| {
                 let connect_signalname = connect_signalname(signal);
-                let signalname_str = signal.sig.name.as_ref();
                 let signalname_trampoline = signal_trampoline_name(signal);
+                let sig = &signal.sig;
+                let signalname_str = sig.name.as_ref();
+                let inputs = &sig.inputs[1..]; // remove the &self, because we need &Self below
+                let output = &sig.output;
 
                 quote_cs! {
-                    // FIXME: argument types inside the Fn
-                    // FIXME: return type for the Fn or unit
-                    fn #connect_signalname<F: Fn(&Self) -> () + 'static>(&self, f: F) -> glib::SignalHandlerId {
+                    fn #connect_signalname<F: Fn(&Self, #(#inputs),*) -> #output + 'static>(&self, f: F) ->
+                        glib::SignalHandlerId
+                    {
                         unsafe {
-                            // FIXME: argument types inside the Fn
-                            // FIXME: return type for the Fn or unit
-                            let f: Box<Box<Fn(&Self) -> () + 'static>> = Box::new(Box::new(f));
+                            let f: Box<Box<Fn(&Self, #(#inputs),*) -> #output + 'static>> = Box::new(Box::new(f));
                             glib::signal::connect(self.to_glib_none().0,
                                                   #signalname_str,
                                                   mem::transmute(#signalname_trampoline::<Self> as usize),
