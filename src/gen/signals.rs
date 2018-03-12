@@ -3,25 +3,55 @@ use self::cstringident::CStringIdent;
 
 impl<'ast> ClassContext<'ast> {
     /// Generates connect_signalname() function prototypes for the InstanceExt trait
+    ///
+    /// These are the `trait InstanceExt { fn connect_signalname(...); }` functions.
+    ///
+    /// We generate their implementation in `signal_connect_impl_fns()` below.
     pub fn signal_connect_trait_fns(&self) -> Vec<Tokens> {
-        // FIXME: methods to connect to signals like in glib-rs
-        //
-        // fn connect_signalname<F: Fn(&Self, type, type) -> type + 'static>(&self, f: F) -> glib::SignalHandlerId;
-        Vec::new()
+        self.signals()
+            .map(|signal| {
+                let connect_signalname = connect_signalname(signal);
+                quote_cs! {
+                    // FIXME: argument types inside the Fn
+                    // FIXME: return type for the Fn or unit
+                    fn #connect_signalname<F: Fn(&Self) -> () + 'static>(&self, f: F) -> glib::SignalHandlerId;
+                }
+            })
+            .collect()
     }
 
-    /// Generates connect_signalname() impls for the InstanceExt implementation
+    /// Generates connect_signalname() impls for the InstanceExt implementation.
+    ///
+    /// These call glib::signal::connect() with our generated
+    /// signalname_trampoline as callback, and a boxed closure.
+    ///
+    /// These are trait function implementations inside the generated
+    /// `impl InstanceExt for O`.  We emit the trait declaration in
+    /// `signal_connectg_trait_fns()`.
     pub fn signal_connect_impl_fns(&self) -> Vec<Tokens> {
-        // FIXME: methods to connect to signals like in glib-rs
-        //
-        // fn connect_signalname<F: Fn(&Self, type, type) -> type + 'static>(&self, f: F) -> glib::SignalHandlerId {
-        //     unsafe {
-        //         let f: Box_<Box_<Fn(&Self, type, type) -> type + 'static>> = Box_::new(Box_::new(f));
-        //         connect(self.to_glib_none().0, "signalname",
-        //             transmute(signalname_trampoline::<Self> as usize), Box_::into_raw(f) as *mut _)
-        //     }
-        // }
-        Vec::new()
+        self.signals()
+            .map(|signal| {
+                let connect_signalname = connect_signalname(signal);
+                let signalname_str = signal.sig.name.as_ref();
+                let signalname_trampoline = signal_trampoline_name(signal);
+
+                quote_cs! {
+                    // FIXME: argument types inside the Fn
+                    // FIXME: return type for the Fn or unit
+                    fn #connect_signalname<F: Fn(&Self) -> () + 'static>(&self, f: F) -> glib::SignalHandlerId {
+                        unsafe {
+                            // FIXME: argument types inside the Fn
+                            // FIXME: return type for the Fn or unit
+                            let f: Box<Box<Fn(&Self) -> () + 'static>> = Box::new(Box::new(f));
+                            glib::signal::connect(self.to_glib_none().0,
+                                                  #signalname_str,
+                                                  mem::transmute(#signalname_trampoline::<Self> as usize),
+                                                  Box::into_raw(f) as *mut _)
+                        }
+                    }
+                }
+            })
+            .collect()
     }
 
     pub fn signal_trampolines(&self) -> Vec<Tokens> {
@@ -132,4 +162,10 @@ fn signal_id_name<'ast>(signal: &'ast Signal) -> Ident {
 /// for the functions that get passed to g_signal_connect().
 fn signal_trampoline_name(signal: &Signal) -> Ident {
     Ident::from(format!("{}_trampoline", signal.sig.name.as_ref()))
+}
+
+/// From a signal called `foo` generate a `connect_foo` identifier.  This is used
+/// for the public methods in the InstanceExt trait.
+fn connect_signalname(signal: &Signal) -> Ident {
+    Ident::from(format!("connect_{}", signal.sig.name.as_ref()))
 }
