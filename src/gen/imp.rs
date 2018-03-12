@@ -79,7 +79,20 @@ impl<'ast> ClassContext<'ast> {
                         }
                     },
 
-                    Slot::Signal(_) => quote!{}, // panic!("signals not implemented"),
+                    Slot::Signal(Signal { ref sig, body: Some(body) }) => {
+                        method(sig, body, None)
+                    },
+
+                    Slot::Signal(Signal { ref sig, body: None }) => {
+                        let name = Self::slot_impl_name(&sig.name);
+                        let inputs = &sig.inputs;
+                        let output = &sig.output;
+                        quote_cs! {
+                            fn #name(#(#inputs),*) -> #output {
+                                panic!("Called default signal handler {} with no implementation", stringify!(#name));
+                            }
+                        }
+                    },
                 }
             })
             .collect::<Vec<_>>();
@@ -140,7 +153,9 @@ impl<'ast> ClassContext<'ast> {
                         Some(tokens(sig, None))
                     },
 
-                    Slot::Signal(_) => None, // panic!("signals not implemented"),
+                    Slot::Signal(ref signal) => {
+                        Some(tokens(&signal.sig, None))
+                    },
                 }
             })
             .collect::<Vec<_>>();
@@ -157,17 +172,7 @@ impl<'ast> ClassContext<'ast> {
         return ret
     }
 
-    pub fn instance_signal_trampolines(&self) -> Vec<Tokens> {
-        // FIXME
-        Vec::new()
-    }
-
     pub fn instance_method_impls(&self) -> Vec<Tokens> {
-        // FIXME
-        Vec::new()
-    }
-
-    pub fn instance_default_signal_handlers(&self) -> Vec<Tokens> {
         // FIXME
         Vec::new()
     }
@@ -226,7 +231,7 @@ impl<'ast> ClassContext<'ast> {
                         })
                     }
 
-                    Slot::Signal(_) => None, // panic!("signals not implemented"),
+                    Slot::Signal(_) => None, // these don't get exposed in the C API
                 }
             })
             .collect()
@@ -256,9 +261,16 @@ impl<'ast> ClassContext<'ast> {
                         Some(quote_cs! {
                             klass.#name = Some(#InstanceNameFfi::#trampoline_name);
                         })
-                    }
+                    },
 
-                    Slot::Signal(_) => None, // panic!("signals not implemented"),
+                    Slot::Signal(ref signal) => {
+                        let signalname = signal.sig.name;
+                        let trampoline_name = Self::slot_trampoline_name(&signalname);
+
+                        Some(quote_cs! {
+                            klass.#signalname = Some(#InstanceNameFfi::#trampoline_name);
+                        })
+                    },
                 }
             })
             .collect::<Vec<_>>();
