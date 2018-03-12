@@ -46,7 +46,9 @@ impl<'ast> ClassContext<'ast> {
             .collect()
     }
 
-    pub fn method_redirects(&self) -> Vec<Tokens> {
+    /// Generates the implementations of the trait functions defined
+    /// in `slot_trait_fns()`.
+    pub fn slot_trait_impls(&self) -> Vec<Tokens> {
         self.class
             .slots
             .iter()
@@ -75,7 +77,30 @@ impl<'ast> ClassContext<'ast> {
                         })
                     }
 
-                    Slot::Signal(_) => None, // panic!("signals not implemented"),
+                    Slot::Signal(ref signal) => {
+                        let connect_signalname = signals::connect_signalname(signal);
+                        let signalname_trampoline = signals::signal_trampoline_name(signal);
+                        let sig = &signal.sig;
+                        let signalname_str = sig.name.as_ref();
+                        let inputs = &sig.inputs[1..]; // remove the &self, because we need &Self below
+                        let output = &sig.output;
+
+                        Some(quote_cs! {
+                            fn #connect_signalname<F: Fn(&Self, #(#inputs),*) -> #output + 'static>(&self, f: F) ->
+                                glib::SignalHandlerId
+                            {
+                                unsafe {
+                                    let f: Box<Box<Fn(&Self, #(#inputs),*) -> #output + 'static>> =
+                                        Box::new(Box::new(f));
+
+                                    glib::signal::connect(self.to_glib_none().0,
+                                                          #signalname_str,
+                                                          mem::transmute(#signalname_trampoline::<Self> as usize),
+                                                          Box::into_raw(f) as *mut _)
+                                }
+                            }
+                        })
+                    },
                 }
             })
             .collect()

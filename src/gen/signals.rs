@@ -2,41 +2,6 @@ use super::*;
 use self::cstringident::CStringIdent;
 
 impl<'ast> ClassContext<'ast> {
-    /// Generates connect_signalname() impls for the InstanceExt implementation.
-    ///
-    /// These call glib::signal::connect() with our generated
-    /// signalname_trampoline as callback, and a boxed closure.
-    ///
-    /// These are trait function implementations inside the generated
-    /// `impl InstanceExt for O`.  We emit the trait declaration in
-    /// `signal_connectg_trait_fns()`.
-    pub fn signal_connect_impl_fns(&self) -> Vec<Tokens> {
-        self.signals()
-            .map(|signal| {
-                let connect_signalname = connect_signalname(signal);
-                let signalname_trampoline = signal_trampoline_name(signal);
-                let sig = &signal.sig;
-                let signalname_str = sig.name.as_ref();
-                let inputs = &sig.inputs[1..]; // remove the &self, because we need &Self below
-                let output = &sig.output;
-
-                quote_cs! {
-                    fn #connect_signalname<F: Fn(&Self, #(#inputs),*) -> #output + 'static>(&self, f: F) ->
-                        glib::SignalHandlerId
-                    {
-                        unsafe {
-                            let f: Box<Box<Fn(&Self, #(#inputs),*) -> #output + 'static>> = Box::new(Box::new(f));
-                            glib::signal::connect(self.to_glib_none().0,
-                                                  #signalname_str,
-                                                  mem::transmute(#signalname_trampoline::<Self> as usize),
-                                                  Box::into_raw(f) as *mut _)
-                        }
-                    }
-                }
-            })
-            .collect()
-    }
-
     pub fn signal_trampolines(&self) -> Vec<Tokens> {
         // FIXME: signal handler trampolines like in glib-rs
         //
@@ -143,7 +108,7 @@ fn signal_id_name<'ast>(signal: &'ast Signal) -> Ident {
 
 /// From a signal called `foo` generate a `foo_trampoline` identifier.  This is used
 /// for the functions that get passed to g_signal_connect().
-fn signal_trampoline_name(signal: &Signal) -> Ident {
+pub fn signal_trampoline_name(signal: &Signal) -> Ident {
     Ident::from(format!("{}_trampoline", signal.sig.name.as_ref()))
 }
 
