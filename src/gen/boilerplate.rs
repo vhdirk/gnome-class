@@ -77,7 +77,6 @@ impl<'ast> ClassContext<'ast> {
                 use glib::translate::*;
                 use std::ptr;
                 use std::mem;
-                // use std::mem::transmute;
 
                 // Bring in our parent's stuff so the user's implementation
                 // can use what they had already defined there.

@@ -41,7 +41,37 @@ impl<'ast> ClassContext<'ast> {
         //     // those are by-reference arguments.  For by-value arguments,
         //     from_glib(argname)
         // }
-        Vec::new()
+        self.signals()
+            .map(|signal| {
+                let signalname_trampoline = signal_trampoline_name(signal);
+                let InstanceName = self.InstanceName;
+                let InstanceNameFfi = self.InstanceNameFfi;
+                let callback_guard = glib_callback_guard();
+
+                quote_cs! {
+                    unsafe extern "C" fn #signalname_trampoline<P>(
+                        this: *mut imp::#InstanceNameFfi,
+                        // FIXME: signal arguments
+                        // argname: type,
+                        // argname: type,
+                        f: glib_ffi::gpointer,
+                    ) -> () // FIXME: return type or unit
+                        where
+                        P: IsA<#InstanceName>,
+                    {
+                        #callback_guard
+
+                        // FIXME: argument types - let f: &&(Fn(&P, type, type) -> type + 'static) = transmute(f);
+                        // FIXME: return type or unit
+                        let f: &&(Fn(&P) -> () + 'static) = mem::transmute(f);
+
+                        // FIXME: pass arguments
+                        // FIXME: convert return value
+                        f(&#InstanceName::from_glib_borrow(this).downcast_unchecked())
+                    }
+                }
+            })
+            .collect()
     }
 
     pub fn signal_declarations(&self) -> Vec<Tokens> {
@@ -98,3 +128,8 @@ fn signal_id_name<'ast>(signal: &'ast Signal) -> Ident {
     Ident::from(format!("{}_signal_id", signal.sig.name.as_ref()))
 }
 
+/// From a signal called `foo` generate a `foo_trampoline` identifier.  This is used
+/// for the functions that get passed to g_signal_connect().
+fn signal_trampoline_name(signal: &Signal) -> Ident {
+    Ident::from(format!("{}_trampoline", signal.sig.name.as_ref()))
+}
