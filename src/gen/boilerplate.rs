@@ -41,9 +41,7 @@ impl<'ast> ClassContext<'ast> {
         let signal_declarations              = self.signal_declarations();
 
         let instance_method_trampolines      = self.instance_method_trampolines();
-        let instance_signal_trampolines      = self.instance_signal_trampolines();
         let instance_method_impls            = self.instance_method_impls();
-        let instance_default_signal_handlers = self.instance_default_signal_handlers();
         let instance_name_string             = CStringIdent(*InstanceName);
 
         let imp_extern_methods               = self.imp_extern_methods();
@@ -196,11 +194,7 @@ impl<'ast> ClassContext<'ast> {
 
                         #(#instance_method_trampolines)*
 
-                        #(#instance_signal_trampolines)*
-
                         #(#instance_method_impls)*
-
-                        #(#instance_default_signal_handlers)*
                     }
 
                     impl #ClassName {
