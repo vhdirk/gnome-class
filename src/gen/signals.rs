@@ -25,27 +25,31 @@ impl<'ast> ClassContext<'ast> {
                 let InstanceName = self.InstanceName;
                 let InstanceNameFfi = self.InstanceNameFfi;
                 let callback_guard = glib_callback_guard();
+                let sig = &signal.sig;
+                let c_inputs = sig.input_args_with_glib_types();
+                let inputs = &sig.inputs[1..]; // remove the &self, because we need include the &P below
+                let arg_names = sig.input_args_from_glib_types();
+                let output = &sig.output;
+
+                let ret = quote_cs! {
+                    f(&#InstanceName::from_glib_borrow(this).downcast_unchecked(), #arg_names)
+                };
+                let ret = sig.ret_to_glib(ret);
 
                 quote_cs! {
                     unsafe extern "C" fn #signalname_trampoline<P>(
                         this: *mut imp::#InstanceNameFfi,
-                        // FIXME: signal arguments
-                        // argname: type,
-                        // argname: type,
+                        #c_inputs
                         f: glib_ffi::gpointer,
-                    ) -> () // FIXME: return type or unit
+                    ) -> #output
                         where
                         P: IsA<#InstanceName>,
                     {
                         #callback_guard
 
-                        // FIXME: argument types - let f: &&(Fn(&P, type, type) -> type + 'static) = transmute(f);
-                        // FIXME: return type or unit
-                        let f: &&(Fn(&P) -> () + 'static) = mem::transmute(f);
+                        let f: &&(Fn(&P, #(#inputs),*) -> #output + 'static) = mem::transmute(f);
 
-                        // FIXME: pass arguments
-                        // FIXME: convert return value
-                        f(&#InstanceName::from_glib_borrow(this).downcast_unchecked())
+                        #ret
                     }
                 }
             })
