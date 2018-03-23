@@ -91,6 +91,11 @@ fn error(msg: &str, span: proc_macro2::Span) -> Tokens {
 
 <antoyo> Instead of returning the generated code, you return that.
 
+** Good error messages from relm
+
+https://github.com/antoyo/relm/commit/a1273fee008c5d23e563013b5bc06b248d7d3ab6#diff-3d41c897cfaf02d790dfc4d9403e07b2R458
+Grep for error_expecting_braces! and error_after_child_gtk_items! there
+
 * Inspiration:
 
 ** Rustc's structure: https://github.com/rust-lang/rust/blob/master/src/librustc/README.md
