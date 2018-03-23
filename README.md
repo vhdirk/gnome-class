@@ -16,6 +16,32 @@ The goal of this Gnome-class crate is to let you write GObject
 implementations in Rust with minimal or no boilerplate, and with
 compile-time type safety all along.
 
+## Requirements
+
+Gnome-class is a Rust procedural macro.  We make use of the
+`proc-macro2` crate, which as of March 2018 requires the **Rust
+nightly** toolchain.  This is probably easiest to set up with
+[`rustup`], which will install the Rust/Cargo toolchain in your home
+directory, without overwriting your system's installation.
+
+Once you are in the `rustup` environment, you can select the nightly
+toolchain as the default like this:
+
+```sh
+rustup default nightly
+```
+
+Or if you don't want to make that the default, but still work on
+gnome-class, you can be careful to type
+
+```sh
+cargo +nightly test
+```
+
+instead of the usual "`cargo test`" you would use for development.
+
+[`rustup`]: https://www.rustup.rs/
+
 ## How gnome-class works
 
 Gnome-class is a procedural macro for Rust.  Within the macro, we
