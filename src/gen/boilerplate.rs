@@ -76,6 +76,12 @@ impl<'ast> ClassContext<'ast> {
                 use std::ptr;
                 use std::mem;
 
+                // Bring in our parent's stuff so they can do things like
+                //
+                //     class Foo: StuffThatNeedsToBeInScope { }
+                #[allow(unused_imports)]
+                use super::*;
+
                 // #[cfg(feature = "bindings")]
                 // mod ffi;
 
@@ -109,6 +115,7 @@ impl<'ast> ClassContext<'ast> {
                     use std::mem;
                     use std::ptr;
 
+                    #[allow(unused_imports)]
                     use glib::translate::*;
 
                     #[repr(C)]
