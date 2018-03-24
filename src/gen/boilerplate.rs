@@ -67,7 +67,10 @@ impl<'ast> ClassContext<'ast> {
                 // extern crate libc;
 
                 use glib::IsA;
-                // use glib::object::Downcast;
+
+                #[allow(unused_imports)]
+                use glib::object::Downcast;
+
                 // use glib::signal::connect;
                 use glib::translate::*;
                 use std::ptr;
