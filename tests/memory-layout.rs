@@ -47,50 +47,24 @@ gobject_gen! {
     }
 }
 
-#[test]
-fn zero_slots() {
+fn assert_n_slots_bigger_than_gobject_class<T>(n: usize)
+where
+    T: glib::wrapper::Wrapper,
+{
     assert_eq!(
-        mem::size_of::<<ZeroSlots as glib::wrapper::Wrapper>::GlibType>(),
+        mem::size_of::<<T as glib::wrapper::Wrapper>::GlibType>(),
         mem::size_of::<gobject_sys::GObject>()
     );
     assert_eq!(
-        mem::size_of::<<ZeroSlots as glib::wrapper::Wrapper>::GlibClassType>(),
-        mem::size_of::<gobject_sys::GObjectClass>()
+        mem::size_of::<<T as glib::wrapper::Wrapper>::GlibClassType>(),
+        mem::size_of::<gobject_sys::GObjectClass>() + n * mem::size_of::<usize>()
     );
 }
 
 #[test]
-fn one_slot() {
-    assert_eq!(
-        mem::size_of::<<OneSlot as glib::wrapper::Wrapper>::GlibType>(),
-        mem::size_of::<gobject_sys::GObject>()
-    );
-    assert_eq!(
-        mem::size_of::<<OneSlot as glib::wrapper::Wrapper>::GlibClassType>(),
-        mem::size_of::<gobject_sys::GObjectClass>() + mem::size_of::<usize>()
-    );
-}
-
-#[test]
-fn two_slots() {
-    assert_eq!(
-        mem::size_of::<<TwoSlots as glib::wrapper::Wrapper>::GlibType>(),
-        mem::size_of::<gobject_sys::GObject>()
-    );
-    assert_eq!(
-        mem::size_of::<<TwoSlots as glib::wrapper::Wrapper>::GlibClassType>(),
-        mem::size_of::<gobject_sys::GObjectClass>() + 2 * mem::size_of::<usize>()
-    );
-}
-
-#[test]
-fn three_slots() {
-    assert_eq!(
-        mem::size_of::<<ThreeSlots as glib::wrapper::Wrapper>::GlibType>(),
-        mem::size_of::<gobject_sys::GObject>()
-    );
-    assert_eq!(
-        mem::size_of::<<ThreeSlots as glib::wrapper::Wrapper>::GlibClassType>(),
-        mem::size_of::<gobject_sys::GObjectClass>() + 3 * mem::size_of::<usize>()
-    );
+fn size_of_structs() {
+    assert_n_slots_bigger_than_gobject_class::<ZeroSlots>(0);
+    assert_n_slots_bigger_than_gobject_class::<OneSlot>(1);
+    assert_n_slots_bigger_than_gobject_class::<TwoSlots>(2);
+    assert_n_slots_bigger_than_gobject_class::<ThreeSlots>(3);
 }
