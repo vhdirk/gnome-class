@@ -27,12 +27,29 @@ glib_wrapper! {
 }
 
 gobject_gen! {
+    // Make an instantiable class out of InitiallyUnowned
     class Floating: InitiallyUnowned {
+    }
+
+    impl Floating {
+        virtual fn frob(&self) {
+            println!("hello!");
+        }
+    }
+
+    // This will just have a method that doesn't take ownership of a Floating object
+    class Foo {
+    }
+
+    impl Foo {
+        virtual fn blah(&self, x: &Floating) {
+            x.frob();
+        }
     }
 }
 
 #[test]
-fn initially_unowned_starts_floating() {
+fn initially_unowned_is_floating() {
     let floating = Floating::new();
 
     let starts_floating: bool = unsafe {
@@ -40,4 +57,19 @@ fn initially_unowned_starts_floating() {
     };
 
     assert!(starts_floating);
+
+    let foo = Foo::new();
+    let foo_is_floating: bool = unsafe {
+        from_glib(gobject_sys::g_object_is_floating(foo.to_glib_none().0))
+    };
+
+    assert!(!foo_is_floating);
+
+    foo.blah(&floating);
+
+    let floating_remains_floating: bool = unsafe {
+        from_glib(gobject_sys::g_object_is_floating(floating.to_glib_none().0))
+    };
+
+    assert!(floating_remains_floating);
 }
