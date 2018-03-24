@@ -15,6 +15,7 @@ use gobject_sys as gobject_ffi;
 use std::mem;
 use std::ptr;
 
+use glib::{IsA, Object};
 use glib::translate::*;
 
 // The glib crate doesn't bind GInitiallyUnowned, so let's bind it here.
@@ -48,28 +49,26 @@ gobject_gen! {
     }
 }
 
+fn is_floating<T: IsA<Object>>(obj: &T) -> bool {
+    from_glib(unsafe {
+        gobject_sys::g_object_is_floating(obj.to_glib_none().0)
+    })
+}
+
 #[test]
 fn initially_unowned_is_floating() {
     let floating = Floating::new();
 
-    let starts_floating: bool = unsafe {
-        from_glib(gobject_sys::g_object_is_floating(floating.to_glib_none().0))
-    };
-
-    assert!(starts_floating);
+    assert!(is_floating(&floating));
 
     let foo = Foo::new();
     let foo_is_floating: bool = unsafe {
         from_glib(gobject_sys::g_object_is_floating(foo.to_glib_none().0))
     };
 
-    assert!(!foo_is_floating);
+    assert!(!is_floating(&foo));
 
     foo.blah(&floating);
 
-    let floating_remains_floating: bool = unsafe {
-        from_glib(gobject_sys::g_object_is_floating(floating.to_glib_none().0))
-    };
-
-    assert!(floating_remains_floating);
+    assert!(is_floating(&floating));
 }
