@@ -45,6 +45,15 @@ gobject_gen! {
     impl ThreeSlots {
         signal fn baz(&self);
     }
+
+/*
+    class ThirteenSlots: ThreeSlots {
+    }
+
+    impl ThirteenSlots {
+        reserve_slots(10)
+    }
+*/
 }
 
 fn assert_n_slots_bigger_than_gobject_class<T>(n: usize)
@@ -67,4 +76,7 @@ fn size_of_structs() {
     assert_n_slots_bigger_than_gobject_class::<OneSlot>(1);
     assert_n_slots_bigger_than_gobject_class::<TwoSlots>(2);
     assert_n_slots_bigger_than_gobject_class::<ThreeSlots>(3);
+    /*
+    assert_n_slots_bigger_than_gobject_class::<ThirteenSlots>(13);
+    */
 }
