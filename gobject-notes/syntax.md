@@ -22,6 +22,8 @@ gnome_class! {
 
     // this defines the class ABI, basically
     impl Foo {
+        // various kinds of methods ----------------------------------------
+
         pub fn static_method(&self, ...) {
             ...
         }
@@ -33,27 +35,26 @@ gnome_class! {
         fn this_private_method_is_an_implementation_detail(&self) {
             // and is not exported or put in the class slots
         }
+        
+        // signals ----------------------------------------
 
-        signal some_signal(&self, ...);
+        signal fn some_signal(&self, ...);
 
-        signal with_default_handler(&self, ...) -> Bar {
+        #[signal-flags FIXME]
+        signal fn with_default_handler(&self, ...) -> Bar {
             // default handler code goes here
         }
 
-        #[accumulator(my_accumulator_function)]
-        signal sig_with_accumulator(&self, ...);
+        #[accumulator(my_accumulator)] // see my_accumulator below
+        signal fn sig_with_accumulator(&self, ...);
+        
+        // C ABI considerations ----------------------------------------
 
         reserve_slots(5); // decrement this when you add a method/signal, for ABI compatibility
-    }
-
-    // from sig_with_accumulator above
-    fn my_accumulator(/* FIXME: arguments */) -> bool {
-        ...
-    }
-
-    // Properties.  These could go in the "impl Foo" above?
-    // See https://wiki.gnome.org/Projects/Vala/Manual/Classes#Properties for ideas
-    impl Foo {
+    
+        // Properties ----------------------------------------
+        // See https://wiki.gnome.org/Projects/Vala/Manual/Classes#Properties for ideas
+        
         #[attributes...]
         property some_property: T where T: u32 {
             get(&self) -> T {
@@ -84,15 +85,25 @@ gnome_class! {
         }
     }
 
+    // from sig_with_accumulator above
+    fn my_accumulator(/* FIXME: arguments */) -> bool {
+        ...
+    }
+
+    // Override methods from a parent class
+
     impl Superclass for Foo {
-        fn overriden_method(&self, ...) {
+        // with the same signature as the method in the parent class
+        virtual fn overriden_virtual_method(&self, ...) {
             ...
         }
 
-        signal overriden_signal_handler(&self, ...) {
+        signal fn overriden_signal_handler(&self, ...) {
             ...
         }
     }
+    
+    // Override methods from another of the parent classes
 
     impl AnotherSuperclass for Foo {
         // same as above
@@ -120,8 +131,10 @@ gnome_class! {
     // Pros: makes it obvious at a glance what interfaces are implemented
     // Cons: a little duplication
     impl SomeInterface for Foo {
-        fn blah(&self, ...) {
+        virtual fn blah(&self, ...) {
         }
     }
+    
+    // FIXME: we need syntax to define new GTypeInterfaces
 }
 ```
