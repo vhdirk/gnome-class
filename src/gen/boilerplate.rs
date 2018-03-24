@@ -73,10 +73,6 @@ impl<'ast> ClassContext<'ast> {
                 use std::ptr;
                 use std::mem;
 
-                // Bring in our parent's stuff so the user's implementation
-                // can use what they had already defined there.
-                // use super::*;
-
                 // #[cfg(feature = "bindings")]
                 // mod ffi;
 
