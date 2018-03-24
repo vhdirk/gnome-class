@@ -13,12 +13,14 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 
 #[derive(Clone)]
 pub struct DropCounter {
-    counter: Arc<AtomicUsize>
+    counter: Arc<AtomicUsize>,
 }
 
 impl DropCounter {
     pub fn new() -> Self {
-        DropCounter { counter: Arc::new(AtomicUsize::new(0)) }
+        DropCounter {
+            counter: Arc::new(AtomicUsize::new(0)),
+        }
     }
 
     pub fn get(&self) -> usize {
@@ -33,13 +35,13 @@ impl Drop for DropCounter {
 }
 
 struct DummyPrivate {
-    dc: RefCell<DropCounter>
+    dc: RefCell<DropCounter>,
 }
 
 impl Default for DummyPrivate {
     fn default() -> Self {
         DummyPrivate {
-            dc: RefCell::new(DropCounter::new())
+            dc: RefCell::new(DropCounter::new()),
         }
     }
 }

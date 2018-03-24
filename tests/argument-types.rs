@@ -74,7 +74,6 @@ gobject_gen! {
     }
 }
 
-
 #[test]
 fn test() {
     use glib_sys::*;
@@ -93,24 +92,14 @@ fn test() {
     type F = <Foo as glib::wrapper::Wrapper>::GlibType;
 
     // assert that the generated functions have the right type
-    let _: unsafe extern fn(*mut T) -> gboolean =
-        TestMod::imp::test_one;
-    let _: unsafe extern fn(*mut T, gboolean, i32) -> gboolean =
-        TestMod::imp::test_two;
-    let _: unsafe extern fn(*mut T, gboolean) -> gboolean =
-        TestMod::imp::test_four;
-    let _: unsafe extern fn(*mut T) =
-        TestMod::imp::test_five;
-    let _: unsafe extern fn(*mut T) =
-        TestMod::imp::test_six;
-    let _: unsafe extern fn(*mut T, u32) =
-        TestMod::imp::test_seven;
-    let _: unsafe extern fn(*mut T, usize) -> i8 =
-        TestMod::imp::test_eight;
-    let _: unsafe extern fn(*mut T, u32) -> u32 =
-        TestMod::imp::test_nine;
-    let _: unsafe extern fn(*mut T, *mut F) -> gboolean =
-        TestMod::imp::test_ten;
-    let _: unsafe extern fn(*mut T, *mut T) -> gboolean =
-        TestMod::imp::test_eleven;
+    let _: unsafe extern "C" fn(*mut T) -> gboolean = TestMod::imp::test_one;
+    let _: unsafe extern "C" fn(*mut T, gboolean, i32) -> gboolean = TestMod::imp::test_two;
+    let _: unsafe extern "C" fn(*mut T, gboolean) -> gboolean = TestMod::imp::test_four;
+    let _: unsafe extern "C" fn(*mut T) = TestMod::imp::test_five;
+    let _: unsafe extern "C" fn(*mut T) = TestMod::imp::test_six;
+    let _: unsafe extern "C" fn(*mut T, u32) = TestMod::imp::test_seven;
+    let _: unsafe extern "C" fn(*mut T, usize) -> i8 = TestMod::imp::test_eight;
+    let _: unsafe extern "C" fn(*mut T, u32) -> u32 = TestMod::imp::test_nine;
+    let _: unsafe extern "C" fn(*mut T, *mut F) -> gboolean = TestMod::imp::test_ten;
+    let _: unsafe extern "C" fn(*mut T, *mut T) -> gboolean = TestMod::imp::test_eleven;
 }

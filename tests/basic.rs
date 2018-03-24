@@ -10,14 +10,12 @@ use gobject_gen::gobject_gen;
 use std::cell::Cell;
 
 struct CounterPrivate {
-    f: Cell<u32>
+    f: Cell<u32>,
 }
 
 impl Default for CounterPrivate {
     fn default() -> Self {
-        CounterPrivate {
-            f: Cell::new(0)
-        }
+        CounterPrivate { f: Cell::new(0) }
     }
 }
 

@@ -18,7 +18,6 @@ gobject_gen! {
     }
 }
 
-
 #[test]
 fn test() {
     let one = One::new();

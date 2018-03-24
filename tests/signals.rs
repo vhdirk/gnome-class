@@ -18,14 +18,12 @@ use glib::object::*;
 use glib::translate::*;
 
 struct SignalerPrivate {
-    val: Cell<u32>
+    val: Cell<u32>,
 }
 
 impl Default for SignalerPrivate {
     fn default() -> Self {
-        SignalerPrivate {
-            val: Cell::new(0)
-        }
+        SignalerPrivate { val: Cell::new(0) }
     }
 }
 
@@ -73,5 +71,5 @@ fn has_value_changed_signal() {
 
         let signal_name = CStr::from_ptr(query.signal_name);
         assert_eq!(signal_name.to_str().unwrap(), "value-changed");
-  }
+    }
 }
