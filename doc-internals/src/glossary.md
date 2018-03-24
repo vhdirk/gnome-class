@@ -2,6 +2,7 @@
 
 Term                       | Meaning
 ---------------------------|--------
+Abstract Syntax Tree (AST) | Data structures which closely match the syntax of some code.
 GI                         | Short for GObject Introspection.
 Glib                       | A C library with common utilities like hash tables, linked lists, and portability aids.  Also contains the [GObject] system.
 Glib-rs                    | The Rust bindings for [Glib] and [GObject].  They include macros and wrappers for the [GType] system.
