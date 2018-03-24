@@ -1,7 +1,7 @@
 #![feature(proc_macro)]
 
-extern crate gobject_gen;
 extern crate glib_sys;
+extern crate gobject_gen;
 
 #[macro_use]
 extern crate glib;
@@ -20,7 +20,9 @@ use glib::translate::*;
 
 // The glib crate doesn't bind GInitiallyUnowned, so let's bind it here.
 glib_wrapper! {
-    pub struct InitiallyUnowned(Object<gobject_sys::GInitiallyUnowned, gobject_sys::GInitiallyUnownedClass>);
+    pub struct InitiallyUnowned(
+        Object<gobject_sys::GInitiallyUnowned, gobject_sys::GInitiallyUnownedClass>
+    );
 
     match fn {
         get_type => || gobject_sys::g_initially_unowned_get_type(),
@@ -50,9 +52,7 @@ gobject_gen! {
 }
 
 fn is_floating<T: IsA<Object>>(obj: &T) -> bool {
-    from_glib(unsafe {
-        gobject_sys::g_object_is_floating(obj.to_glib_none().0)
-    })
+    from_glib(unsafe { gobject_sys::g_object_is_floating(obj.to_glib_none().0) })
 }
 
 #[test]
@@ -62,9 +62,8 @@ fn initially_unowned_is_floating() {
     assert!(is_floating(&floating));
 
     let foo = Foo::new();
-    let foo_is_floating: bool = unsafe {
-        from_glib(gobject_sys::g_object_is_floating(foo.to_glib_none().0))
-    };
+    let foo_is_floating: bool =
+        unsafe { from_glib(gobject_sys::g_object_is_floating(foo.to_glib_none().0)) };
 
     assert!(!is_floating(&foo));
 
