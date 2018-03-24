@@ -1,0 +1,5 @@
+[book]
+authors = ["Federico Mena Quintero"]
+multilingual = false
+src = "src"
+title = "Gnome-class Internals"
