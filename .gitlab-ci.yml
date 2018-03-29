@@ -1,6 +1,7 @@
 stages:
     - test
     - lint
+    - pages
 
 .cargo_test_template: &cargo_test
     stage: test
@@ -47,3 +48,21 @@ nightly:test:
         - rustc -Vv && cargo -Vv
         - cargo fmt --version
         - cargo fmt --all -- --write-mode=diff
+
+pages:
+  # https://hub.docker.com/r/rustlang/rust/
+  image: "rustlang/rust:nightly"
+  stage: pages
+  script:
+    - mkdir public
+    - cargo install mdbook --no-default-features
+    - mdbook build ./doc-internals
+    - cp -r ./doc-internals/book/* ./public
+    - find $PWD/public | grep "\.html\$"
+
+  artifacts:
+    paths:
+      - public
+
+  only:
+    - master
