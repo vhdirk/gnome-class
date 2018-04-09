@@ -9,7 +9,7 @@
 use std::collections::HashMap;
 
 use proc_macro::TokenStream;
-use proc_macro2::{Delimiter, Span, TokenNode, TokenTree};
+use proc_macro2::{Delimiter, Group, Span, TokenTree};
 use quote::{Tokens, ToTokens};
 use syn::{self, Ident, Path, Block, ReturnType};
 use syn::punctuated::Punctuated;
@@ -434,7 +434,7 @@ impl<'a> ToTokens for FnArg<'a> {
             FnArg::Arg { name, ref ty, mutbl } => {
                 mutbl.to_tokens(tokens);
                 name.to_tokens(tokens);
-                Token!(:)([Span::def_site()]).to_tokens(tokens);
+                Token!(:)([Span::call_site()]).to_tokens(tokens);
                 ty.to_tokens(tokens);
             }
         }
@@ -444,15 +444,15 @@ impl<'a> ToTokens for FnArg<'a> {
 impl<'a> ToTokens for Ty<'a> {
     fn to_tokens(&self, tokens: &mut Tokens) {
         match *self {
-            Ty::Unit => tokens.append(TokenTree {
-                span: Span::call_site(),
-                kind: TokenNode::Group(Delimiter::Parenthesis, quote!{ () }.into()),
-            }),
+            Ty::Unit => tokens.append(
+                TokenTree::Group(
+                    Group::new(Delimiter::Parenthesis, quote!{ () }.into()),
+                )),
             Ty::Char(tok) => tok.to_tokens(tokens),
             Ty::Bool(tok) => tok.to_tokens(tokens),
             Ty::Integer(t) => t.to_tokens(tokens),
             Ty::Borrowed(ref t) => {
-                Token!(&)([Span::def_site()]).to_tokens(tokens);
+                Token!(&)([Span::call_site()]).to_tokens(tokens);
                 t.to_tokens(tokens)
             }
             Ty::Owned(t) => t.to_tokens(tokens),

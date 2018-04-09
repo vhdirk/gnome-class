@@ -3,7 +3,7 @@
 
 use quote::{Tokens, ToTokens};
 use syn::{Ident, Path};
-use proc_macro2::{Delimiter, Span, TokenNode, TokenTree};
+use proc_macro2::{Delimiter, Group, Span, TokenTree};
 
 use hir::*;
 use errors::*;
@@ -67,9 +67,10 @@ impl<'ast> ClassContext<'ast> {
         // FIXME(rust-lang/rust#45934) we should be able to use vanilla upstream
         // `syn` ideally, but it's not clear how that would change, if at all
         let container_name = |suffix: &str| {
-            let mut i = Ident::from(format!("{}{}", InstanceName.as_ref(), suffix));
-            i.span = Span::call_site();
-            return i
+            Ident::new(
+                &format!("{}{}", InstanceName.as_ref(), suffix),
+                Span::call_site(),
+            )
         };
 
         let InstanceNameFfi  = container_name("Ffi");
@@ -110,9 +111,10 @@ impl<'ast> ClassContext<'ast> {
     }
 
     fn exported_fn_name(&self, method_name: &str) -> Ident {
-        let mut i = Ident::from(format!("{}_{}", lower_case_instance_name(self.InstanceName.as_ref()), method_name));
-        i.span = Span::call_site();
-        return i
+        Ident::new(
+            &format!("{}_{}", lower_case_instance_name(self.InstanceName.as_ref()), method_name),
+            Span::call_site(),
+        )
     }
 
     fn instance_get_type_fn_name(&self) -> Ident {
@@ -274,10 +276,13 @@ impl<'ast> ToTokens for FromGlib<'ast> {
             };
 
         if needs_conversion {
-            tokens.append(TokenTree {
-                span: Span::call_site(),
-                kind: TokenNode::Group(Delimiter::Parenthesis, self.1.clone().into_tokens().into()),
-            });
+            tokens.append(
+                TokenTree::Group(
+                    Group::new(
+                        Delimiter::Parenthesis,
+                        self.1.clone().into_tokens().into(),
+                    )
+                ));
         } else {
             self.1.to_tokens(tokens);
         }
@@ -292,9 +297,9 @@ impl<'ast> ToTokens for FnArgsWithGlibTypes<'ast> {
             match *arg {
                 FnArg::Arg { name, ref ty, mutbl: _ } => {
                     name.to_tokens(tokens);
-                    Token!(:)([Span::def_site()]).to_tokens(tokens);
+                    Token!(:)([Span::call_site()]).to_tokens(tokens);
                     ToGlibType(ty, self.0).to_tokens(tokens);
-                    Token!(,)([Span::def_site()]).to_tokens(tokens);
+                    Token!(,)([Span::call_site()]).to_tokens(tokens);
                 }
                 FnArg::SelfRef(..) => unreachable!(),
             }
@@ -313,7 +318,7 @@ impl<'ast> ToTokens for ArgNamesFromGlib<'ast> {
                     let mut name_tokens = Tokens::new();
                     name.to_tokens(&mut name_tokens);
                     FromGlib(ty, name_tokens).to_tokens(tokens);
-                    Token!(,)([Span::def_site()]).to_tokens(tokens);
+                    Token!(,)([Span::call_site()]).to_tokens(tokens);
                 }
                 FnArg::SelfRef(..) => unreachable!(),
             }
@@ -330,7 +335,7 @@ impl<'ast> ToTokens for ArgNamesToGlib<'ast> {
             match *arg {
                 FnArg::Arg { ref ty, name, mutbl: _ } => {
                     ToGlib(ty, name).to_tokens(tokens);
-                    Token!(,)([Span::def_site()]).to_tokens(tokens);
+                    Token!(,)([Span::call_site()]).to_tokens(tokens);
                 }
                 FnArg::SelfRef(..) => unreachable!(),
             }
@@ -347,7 +352,7 @@ impl<'ast> ToTokens for ArgNames<'ast> {
             match *arg {
                 FnArg::Arg { name, .. } => {
                     name.to_tokens(tokens);
-                    Token!(,)([Span::def_site()]).to_tokens(tokens);
+                    Token!(,)([Span::call_site()]).to_tokens(tokens);
                 }
                 FnArg::SelfRef(..) => unreachable!(),
             }

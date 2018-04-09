@@ -187,7 +187,7 @@ impl Synom for ast::ImplItemMethod {
 /// ```
 fn keyword<'a>(name: &'static str) -> impl Fn(Cursor<'a>) -> PResult<()> {
     move |input: Cursor<'a>| {
-        if let Some((_, s, rest)) = input.term() {
+        if let Some((s, rest)) = input.term() {
             if s.as_str() == name {
                 return Ok(((), rest));
             }
