@@ -301,7 +301,7 @@ impl<'ast> ClassContext<'ast> {
                     // fn set_property_foo(&self, v: type);
                 }
 
-                impl<O: IsA<#InstanceName> + IsA<glib::object::Object>> #InstanceExt for O {
+                impl<O: IsA<#InstanceName> + IsA<glib::object::Object> + glib::object::ObjectExt> #InstanceExt for O {
                     #(#slot_trait_impls)*
 
                     // FIXME: property setters/getters like in glib-rs
