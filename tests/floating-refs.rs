@@ -15,8 +15,8 @@ use gobject_sys as gobject_ffi;
 use std::mem;
 use std::ptr;
 
-use glib::{IsA, Object};
 use glib::translate::*;
+use glib::{IsA, Object};
 
 // The glib crate doesn't bind GInitiallyUnowned, so let's bind it here.
 glib_wrapper! {

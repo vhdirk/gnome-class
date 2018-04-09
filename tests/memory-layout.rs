@@ -76,7 +76,7 @@ fn size_of_structs() {
     assert_n_slots_bigger_than_gobject_class::<OneSlot>(1);
     assert_n_slots_bigger_than_gobject_class::<TwoSlots>(2);
     assert_n_slots_bigger_than_gobject_class::<ThreeSlots>(3);
-    /*
-    assert_n_slots_bigger_than_gobject_class::<ThirteenSlots>(13);
-    */
+    //
+    // assert_n_slots_bigger_than_gobject_class::<ThirteenSlots>(13);
+    //
 }
