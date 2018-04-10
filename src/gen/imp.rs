@@ -4,8 +4,8 @@ use super::*;
 
 impl<'ast> ClassContext<'ast> {
     pub fn slots(&self) -> Vec<Tokens> {
-        // ABI: we are generating the imp::FooClass with the parent_class, and the slots to signals/methods.
-        // This defines the C ABI for the class structure.
+        // ABI: we are generating the imp::FooClass with the parent_class, and the slots to
+        // signals/methods. This defines the C ABI for the class structure.
         //
         // FIXME: we should check that the extern "C" signatures only have types representable by C.
 
@@ -29,7 +29,7 @@ impl<'ast> ClassContext<'ast> {
                             ) -> #output>,
 
                         })
-                    },
+                    }
 
                     Slot::Signal(ref signal) => {
                         let signalname = signal.sig.name;
@@ -40,7 +40,7 @@ impl<'ast> ClassContext<'ast> {
                                 // FIXME: signal arguments
                             ) -> ()>, // FIXME: signal return value or unit
                         })
-                    },
+                    }
                 }
             })
             .collect()
@@ -58,54 +58,64 @@ impl<'ast> ClassContext<'ast> {
         let mut ret = self.class
             .slots
             .iter()
-            .map(|slot| {
-                match *slot {
-                    Slot::Method(Method { public: false, ref sig, body }) => {
-                        method(sig, body, Some(sig.name))
-                    },
-                    Slot::Method(Method { ref sig, body, .. }) |
-                    Slot::VirtualMethod(VirtualMethod { ref sig, body: Some(body), .. }) => {
-                        method(sig, body, None)
-                    },
+            .map(|slot| match *slot {
+                Slot::Method(Method {
+                    public: false,
+                    ref sig,
+                    body,
+                }) => method(sig, body, Some(sig.name)),
+                Slot::Method(Method { ref sig, body, .. })
+                | Slot::VirtualMethod(VirtualMethod {
+                    ref sig,
+                    body: Some(body),
+                    ..
+                }) => method(sig, body, None),
 
-                    Slot::VirtualMethod(VirtualMethod { ref sig, body: None, .. }) => {
-                        let name = Self::slot_impl_name(&sig.name);
-                        let inputs = &sig.inputs;
-                        let output = &sig.output;
-                        quote_cs! {
-                            fn #name(#(#inputs),*) -> #output {
-                                panic!("Called abstract method {} with no implementation", stringify!(#name));
-                            }
+                Slot::VirtualMethod(VirtualMethod {
+                    ref sig,
+                    body: None,
+                    ..
+                }) => {
+                    let name = Self::slot_impl_name(&sig.name);
+                    let inputs = &sig.inputs;
+                    let output = &sig.output;
+                    quote_cs! {
+                        fn #name(#(#inputs),*) -> #output {
+                            panic!("Called abstract method {} with no implementation", stringify!(#name));
                         }
-                    },
+                    }
+                }
 
-                    Slot::Signal(Signal { ref sig, body: Some(body) }) => {
-                        method(sig, body, None)
-                    },
+                Slot::Signal(Signal {
+                    ref sig,
+                    body: Some(body),
+                }) => method(sig, body, None),
 
-                    Slot::Signal(Signal { ref sig, body: None }) => {
-                        let name = Self::slot_impl_name(&sig.name);
-                        let inputs = &sig.inputs;
-                        let output = &sig.output;
-                        quote_cs! {
-                            fn #name(#(#inputs),*) -> #output {
-                                panic!("Called default signal handler {} with no implementation", stringify!(#name));
-                            }
+                Slot::Signal(Signal {
+                    ref sig,
+                    body: None,
+                }) => {
+                    let name = Self::slot_impl_name(&sig.name);
+                    let inputs = &sig.inputs;
+                    let output = &sig.output;
+                    quote_cs! {
+                        fn #name(#(#inputs),*) -> #output {
+                            panic!("Called default signal handler {} with no implementation", stringify!(#name));
                         }
-                    },
+                    }
                 }
             })
             .collect::<Vec<_>>();
 
-        ret.extend(self.class
-            .overrides
-            .values()
-            .flat_map(|m| m.iter())
-            .map(|m| {
-                method(&m.sig, m.body, None)
-            }));
+        ret.extend(
+            self.class
+                .overrides
+                .values()
+                .flat_map(|m| m.iter())
+                .map(|m| method(&m.sig, m.body, None)),
+        );
 
-        return ret
+        return ret;
     }
 
     pub fn instance_slot_trampolines(&self) -> Vec<Tokens> {
@@ -145,31 +155,27 @@ impl<'ast> ClassContext<'ast> {
         let mut ret = self.class
             .slots
             .iter()
-            .filter_map(|slot| {
-                match *slot {
-                    Slot::Method(_) => None,
+            .filter_map(|slot| match *slot {
+                Slot::Method(_) => None,
 
-                    Slot::VirtualMethod(VirtualMethod { ref sig, .. }) => {
-                        Some(tokens(sig, None))
-                    },
+                Slot::VirtualMethod(VirtualMethod { ref sig, .. }) => Some(tokens(sig, None)),
 
-                    Slot::Signal(ref signal) => {
-                        Some(tokens(&signal.sig, None))
-                    },
-                }
+                Slot::Signal(ref signal) => Some(tokens(&signal.sig, None)),
             })
             .collect::<Vec<_>>();
 
-        ret.extend(self.class
-            .overrides
-            .iter()
-            .flat_map(|(&p, methods)| methods.iter().map(move |m| (p, m)))
-            .map(|(parent_class, method)| {
-                // TODO: does the name here need mangling with the parent class?
-                tokens(&method.sig, Some(parent_class))
-            }));
+        ret.extend(
+            self.class
+                .overrides
+                .iter()
+                .flat_map(|(&p, methods)| methods.iter().map(move |m| (p, m)))
+                .map(|(parent_class, method)| {
+                    // TODO: does the name here need mangling with the parent class?
+                    tokens(&method.sig, Some(parent_class))
+                }),
+        );
 
-        return ret
+        return ret;
     }
 
     pub fn imp_extern_methods(&self) -> Vec<Tokens> {
@@ -181,9 +187,13 @@ impl<'ast> ClassContext<'ast> {
             .iter()
             .filter_map(|slot| {
                 match *slot {
-                    Slot::Method(Method { public: false, .. }) => None, // these don't get exposed in the C API
+                    Slot::Method(Method { public: false, .. }) => None, /* these don't get exposed in the C API */
 
-                    Slot::Method(Method { public: true, ref sig, .. }) => {
+                    Slot::Method(Method {
+                        public: true,
+                        ref sig,
+                        ..
+                    }) => {
                         let ffi_name = self.method_ffi_name(sig.name.as_ref());
                         let method_impl_name = Self::slot_impl_name(&sig.name);
                         let inputs = sig.input_args_with_glib_types();
@@ -245,27 +255,25 @@ impl<'ast> ClassContext<'ast> {
         let mut ret = self.class
             .slots
             .iter()
-            .filter_map(|slot| {
-                match *slot {
-                    Slot::Method(_) => None,
+            .filter_map(|slot| match *slot {
+                Slot::Method(_) => None,
 
-                    Slot::VirtualMethod(VirtualMethod { ref sig, .. }) => {
-                        let name = sig.name;
-                        let trampoline_name = Self::slot_trampoline_name(&sig.name);
+                Slot::VirtualMethod(VirtualMethod { ref sig, .. }) => {
+                    let name = sig.name;
+                    let trampoline_name = Self::slot_trampoline_name(&sig.name);
 
-                        Some(quote_cs! {
-                            klass.#name = Some(#InstanceNameFfi::#trampoline_name);
-                        })
-                    },
+                    Some(quote_cs! {
+                        klass.#name = Some(#InstanceNameFfi::#trampoline_name);
+                    })
+                }
 
-                    Slot::Signal(ref signal) => {
-                        let signalname = signal.sig.name;
-                        let trampoline_name = Self::slot_trampoline_name(&signalname);
+                Slot::Signal(ref signal) => {
+                    let signalname = signal.sig.name;
+                    let trampoline_name = Self::slot_trampoline_name(&signalname);
 
-                        Some(quote_cs! {
-                            klass.#signalname = Some(#InstanceNameFfi::#trampoline_name);
-                        })
-                    },
+                    Some(quote_cs! {
+                        klass.#signalname = Some(#InstanceNameFfi::#trampoline_name);
+                    })
                 }
             })
             .collect::<Vec<_>>();
@@ -285,7 +293,7 @@ impl<'ast> ClassContext<'ast> {
             }
         }
 
-        return ret
+        return ret;
     }
 
     pub fn imp_new_fn_name(&self) -> Ident {
@@ -305,7 +313,7 @@ impl<'ast> ClassContext<'ast> {
             }
 
             None => {
-                quote_cs! {}
+                quote_cs!{}
             }
         }
     }
@@ -331,7 +339,7 @@ impl<'ast> ClassContext<'ast> {
                 }
             }
 
-            None => quote_cs! {}
+            None => quote_cs!{},
         }
     }
 
@@ -354,7 +362,7 @@ impl<'ast> ClassContext<'ast> {
                 }
             }
 
-            None => quote_cs! {}
+            None => quote_cs!{},
         }
     }
 
@@ -376,7 +384,7 @@ impl<'ast> ClassContext<'ast> {
                 }
             }
 
-            None => quote_cs! {}
+            None => quote_cs!{},
         }
     }
 }

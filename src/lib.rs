@@ -1,25 +1,26 @@
 #![feature(catch_expr)]
 #![feature(proc_macro)]
-#![recursion_limit="512"]
-
+#![recursion_limit = "512"]
 // While under active devel, these warnings are kind of annoying.
 #![allow(dead_code)]
 
-#[macro_use] extern crate error_chain;
+#[macro_use]
+extern crate error_chain;
 // extern crate lalrpop_intern;
 // extern crate lalrpop_util;
-#[macro_use] extern crate quote;
+#[macro_use]
+extern crate quote;
 extern crate proc_macro;
 extern crate proc_macro2;
-extern crate unicode_xid;
 extern crate rustfmt;
+extern crate unicode_xid;
 
 #[macro_use]
 extern crate syn;
 
+use errors::*;
 use proc_macro::TokenStream;
 use std::error::Error;
-use errors::*;
 
 macro_rules! quote_cs {
     ($($tt:tt)*) => (quote_spanned!(::proc_macro2::Span::call_site()=>
@@ -178,7 +179,6 @@ mod parser;
 ///
 #[proc_macro]
 pub fn gobject_gen(input: TokenStream) -> TokenStream {
-
     let result: Result<quote::Tokens> = do catch {
         let ast_program = parser::parse_program(input)?;
         let program = hir::Program::from_ast_program(&ast_program)?;
@@ -188,26 +188,20 @@ pub fn gobject_gen(input: TokenStream) -> TokenStream {
     match result {
         Ok(tokens) => {
             let mut config: rustfmt::config::Config = Default::default();
-            let mut out: Vec<u8> = vec!();
+            let mut out: Vec<u8> = vec![];
             config.set().write_mode(rustfmt::config::WriteMode::Plain);
             config.set().error_on_line_overflow(false);
             let stream: String = tokens.to_string().into();
-            match rustfmt::format_input(rustfmt::Input::Text(stream),
-                                        & config,
-                                        Some(& mut out)) {
+            match rustfmt::format_input(rustfmt::Input::Text(stream), &config, Some(&mut out)) {
                 Ok(_) => {
                     let output = String::from_utf8(out).unwrap();
                     println!("/********************************************************************************/\n{}", output);
                     tokens.into()
-                },
-                Err(e) => {
-                    error_to_compile_error(&e.0)
                 }
+                Err(e) => error_to_compile_error(&e.0),
             }
-        },
-        Err(e) => {
-            error_to_compile_error(&e)
         }
+        Err(e) => error_to_compile_error(&e),
     }
 }
 
@@ -226,5 +220,5 @@ pub fn testme(input: TokenStream) -> TokenStream {
     glib_utils::tests::run();
     hir::tests::run();
     parser::tests::run();
-    return input
+    return input;
 }

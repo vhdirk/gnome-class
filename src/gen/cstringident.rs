@@ -1,6 +1,6 @@
-use quote::{Tokens, ToTokens};
-use syn::Ident;
 use proc_macro2::{Literal, TokenTree};
+use quote::{ToTokens, Tokens};
+use syn::Ident;
 
 /// Wraps an `Ident` so it can be tokenized as a C-friendly string literal.
 ///
@@ -13,8 +13,8 @@ impl ToTokens for CStringIdent {
         // Make a b"Foo\0" byte literal
 
         let s = self.0.as_ref();
-        let mut v = Vec::from (s.as_bytes());
-        v.push (0u8);
-        tokens.append (TokenTree::Literal(Literal::byte_string(&v)));
+        let mut v = Vec::from(s.as_bytes());
+        v.push(0u8);
+        tokens.append(TokenTree::Literal(Literal::byte_string(&v)));
     }
 }

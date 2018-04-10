@@ -80,11 +80,13 @@ fn connects_to_signal() {
 
     static mut EMITTED: bool = false;
 
-    let _id: glib::SignalHandlerId = obj.connect_value_changed(|_| {
-        unsafe { EMITTED = true; }
+    let _id: glib::SignalHandlerId = obj.connect_value_changed(|_| unsafe {
+        EMITTED = true;
     });
 
     obj.set_value(42);
 
-    unsafe { assert!(EMITTED); }
+    unsafe {
+        assert!(EMITTED);
+    }
 }

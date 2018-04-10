@@ -1,5 +1,5 @@
-use super::*;
 use super::signals;
+use super::*;
 
 impl<'ast> ClassContext<'ast> {
     /// Returns, for each method, something like
@@ -21,8 +21,12 @@ impl<'ast> ClassContext<'ast> {
                 match *slot {
                     Slot::Method(Method { public: false, .. }) => None,
 
-                    Slot::Method(Method { public: true, ref sig, .. }) |
-                    Slot::VirtualMethod(VirtualMethod { ref sig, .. }) => {
+                    Slot::Method(Method {
+                        public: true,
+                        ref sig,
+                        ..
+                    })
+                    | Slot::VirtualMethod(VirtualMethod { ref sig, .. }) => {
                         let name = sig.name;
                         let inputs = &sig.inputs;
                         let output = &sig.output;
@@ -40,7 +44,7 @@ impl<'ast> ClassContext<'ast> {
                             fn #connect_signalname<F: Fn(&Self, #(#inputs),*) -> #output + 'static>(&self, f: F) ->
                                 glib::SignalHandlerId;
                         })
-                    },
+                    }
                 }
             })
             .collect()
@@ -56,8 +60,12 @@ impl<'ast> ClassContext<'ast> {
                 match *slot {
                     Slot::Method(Method { public: false, .. }) => None,
 
-                    Slot::Method(Method { public: true, ref sig, .. }) |
-                    Slot::VirtualMethod(VirtualMethod { ref sig, .. }) => {
+                    Slot::Method(Method {
+                        public: true,
+                        ref sig,
+                        ..
+                    })
+                    | Slot::VirtualMethod(VirtualMethod { ref sig, .. }) => {
                         let name = sig.name;
                         let ffi_name = self.method_ffi_name(name.as_ref());
                         let arg_names = sig.input_args_to_glib_types();
@@ -100,7 +108,7 @@ impl<'ast> ClassContext<'ast> {
                                 }
                             }
                         })
-                    },
+                    }
                 }
             })
             .collect()
@@ -110,15 +118,15 @@ impl<'ast> ClassContext<'ast> {
         self.exported_fn_name(method)
     }
 
-    /*
-    pub fn methods(&self) -> impl Iterator<Item = &'ast Method> {
-        self.class
-            .items
-            .iter()
-            .filter_map(|item| match *item {
-                ClassItem::Method(ref m) => Some(m),
-                _ => None,
-            })
-    }
-    */
+    //
+    // pub fn methods(&self) -> impl Iterator<Item = &'ast Method> {
+    // self.class
+    // .items
+    // .iter()
+    // .filter_map(|item| match *item {
+    // ClassItem::Method(ref m) => Some(m),
+    // _ => None,
+    // })
+    // }
+    //
 }

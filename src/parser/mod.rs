@@ -1,9 +1,9 @@
 use proc_macro::TokenStream;
 
-use syn::{self, Ident, Path, parse_error};
-use syn::punctuated::{Punctuated};
-use syn::synom::{Synom, PResult};
 use syn::buffer::Cursor;
+use syn::punctuated::Punctuated;
+use syn::synom::{PResult, Synom};
+use syn::{self, parse_error, Ident, Path};
 
 use ast;
 use errors::*;
@@ -200,7 +200,7 @@ pub mod tests {
     use super::*;
     use quote;
     use quote::ToTokens;
-    use syn::{parse_str};
+    use syn::parse_str;
 
     pub fn run() {
         parses_class_with_no_superclass();
@@ -260,6 +260,7 @@ pub mod tests {
     fn parses_program() {
         let raw = "class Foo {
                        type InstancePrivate = FooPrivate;
+                   \
                    }";
         let program = parse_str::<ast::Program>(raw).unwrap();
 

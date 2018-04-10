@@ -1,7 +1,7 @@
 #![allow(non_snake_case)]
 
-use quote::{Tokens, ToTokens};
 use ast;
+use quote::{ToTokens, Tokens};
 
 pub fn tokens_GObject() -> Tokens {
     quote_cs! { glib::Object }
@@ -16,7 +16,8 @@ pub fn tokens_GObjectClassFfi() -> Tokens {
 }
 
 pub fn tokens_ParentInstance(class: &ast::Class) -> Tokens {
-    class.extends
+    class
+        .extends
         .as_ref()
         .map(|path| {
             let mut tokens = Tokens::new();

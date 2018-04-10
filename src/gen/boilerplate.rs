@@ -1,7 +1,7 @@
-use quote::{Tokens};
+use quote::Tokens;
 
-use super::*;
 use self::cstringident::*;
+use super::*;
 
 // This has all the one-time boilerplate for a GObject implementation:
 // the instance and class structs, the get_type(), instance_init(),
@@ -13,45 +13,45 @@ use self::cstringident::*;
 
 impl<'ast> ClassContext<'ast> {
     pub fn gen_boilerplate(&self) -> Tokens {
-        let ModuleName                       = &self.ModuleName;
-        let ClassName                        = self.ClassName;
-        let InstanceName                     = self.InstanceName;
-        let InstanceNameFfi                  = self.InstanceNameFfi;
-        let InstanceExt                      = &self.InstanceExt;
-        let ParentClassFfi                   = self.ParentClassFfi;
-        let ParentInstance                   = self.ParentInstance;
-        let ParentInstanceFfi                = self.ParentInstanceFfi;
-        let PrivateClassName                 = &self.PrivateClassName;
+        let ModuleName = &self.ModuleName;
+        let ClassName = self.ClassName;
+        let InstanceName = self.InstanceName;
+        let InstanceNameFfi = self.InstanceNameFfi;
+        let InstanceExt = &self.InstanceExt;
+        let ParentClassFfi = self.ParentClassFfi;
+        let ParentInstance = self.ParentInstance;
+        let ParentInstanceFfi = self.ParentInstanceFfi;
+        let PrivateClassName = &self.PrivateClassName;
 
-        let callback_guard                   = glib_callback_guard();
-        let register_instance_private        = self.register_instance_private();
-        let get_priv_fn                      = self.get_priv_fn();
-        let init_priv_with_default           = self.init_priv_with_default();
-        let free_instance_private            = self.free_instance_private();
-        let get_type_fn_name                 = self.instance_get_type_fn_name();
-        let imp_new_fn_name                  = self.imp_new_fn_name();
+        let callback_guard = glib_callback_guard();
+        let register_instance_private = self.register_instance_private();
+        let get_priv_fn = self.get_priv_fn();
+        let init_priv_with_default = self.init_priv_with_default();
+        let free_instance_private = self.free_instance_private();
+        let get_type_fn_name = self.instance_get_type_fn_name();
+        let imp_new_fn_name = self.imp_new_fn_name();
 
-        let slots                            = self.slots();
+        let slots = self.slots();
 
-        let names                            = self.signal_id_names();
-        let signal_id_names                  = &names; // reference, otherwise quote! will consume the vector
+        let names = self.signal_id_names();
+        let signal_id_names = &names; // reference, otherwise quote! will consume the vector
 
-        let slot_default_handlers            = self.imp_slot_default_handlers();
-        let signal_emit_methods              = self.signal_emit_methods();
-        let slot_assignments                 = self.slot_assignments();
-        let signal_declarations              = self.signal_declarations();
+        let slot_default_handlers = self.imp_slot_default_handlers();
+        let signal_emit_methods = self.signal_emit_methods();
+        let slot_assignments = self.slot_assignments();
+        let signal_declarations = self.signal_declarations();
 
-        let instance_slot_trampolines        = self.instance_slot_trampolines();
-        let instance_name_string             = CStringIdent(*InstanceName);
+        let instance_slot_trampolines = self.instance_slot_trampolines();
+        let instance_name_string = CStringIdent(*InstanceName);
 
-        let imp_extern_methods               = self.imp_extern_methods();
+        let imp_extern_methods = self.imp_extern_methods();
 
-        let slot_trait_fns                   = &self.slot_trait_fns();
-        let slot_trait_impls                 = self.slot_trait_impls();
-        let signal_trampolines               = self.signal_trampolines();
+        let slot_trait_fns = &self.slot_trait_fns();
+        let slot_trait_impls = self.slot_trait_impls();
+        let signal_trampolines = self.signal_trampolines();
 
         let parent_instance_tokens = if self.class.gobject_parent {
-            quote_cs! {}
+            quote_cs!{}
         } else {
             quote_cs! { : #ParentInstance }
         };
