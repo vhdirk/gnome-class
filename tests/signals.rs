@@ -36,6 +36,7 @@ gobject_gen! {
 
     impl Signaler {
         signal fn value_changed(&self);
+        signal fn value_changed_to(&self);
 
         pub fn set_value(&self, v: u32) {
             let private = self.get_priv();
@@ -73,11 +74,13 @@ fn has_signals() {
         let mut n_ids: libc::c_uint = 0;
 
         let raw_signal_ids = gobject_sys::g_signal_list_ids(obj_type, &mut n_ids);
-        assert_eq!(n_ids, 1);
+        assert_eq!(n_ids, 2);
 
         let n_ids = n_ids as usize;
 
         let signal_ids = slice::from_raw_parts(raw_signal_ids, n_ids);
+
+        // value-changed
 
         let mut query: gobject_sys::GSignalQuery = mem::zeroed();
         gobject_sys::g_signal_query(signal_ids[0], &mut query);
@@ -86,6 +89,13 @@ fn has_signals() {
 
         assert_eq!(query.n_params, 0);
         assert!(query.param_types.is_null());
+
+        // value-changed-to
+
+        let mut query: gobject_sys::GSignalQuery = mem::zeroed();
+        gobject_sys::g_signal_query(signal_ids[1], &mut query);
+
+        check_signal(&query, obj_type, signal_ids[1], "value-changed-to");
     }
 }
 
