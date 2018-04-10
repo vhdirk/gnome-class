@@ -17,3 +17,11 @@ reorder_imports_in_group = true
 use_field_init_shorthand = true
 imports_indent = "Block"
 imports_layout = "HorizontalVertical"
+ignore = [
+   "src/ast.rs",
+   "src/gen/boilerplate.rs",
+   "src/gen/imp.rs",
+   "src/gen/instance_ext.rs",
+   "src/gen/mod.rs",
+   "src/hir/mod.rs",
+]
