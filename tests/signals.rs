@@ -6,6 +6,8 @@ extern crate gobject_sys;
 #[macro_use]
 extern crate glib;
 
+extern crate glib_sys;
+
 extern crate libc;
 
 use gobject_gen::gobject_gen;
@@ -48,8 +50,22 @@ gobject_gen! {
     }
 }
 
+#[cfg(test)]
+fn check_signal(
+    query: &gobject_sys::GSignalQuery,
+    obj_type: glib_sys::GType,
+    signal_id: libc::c_uint,
+    signal_name: &str,
+) {
+    assert_eq!(query.itype, obj_type);
+    assert_eq!(query.signal_id, signal_id);
+
+    let name = unsafe { CStr::from_ptr(query.signal_name) };
+    assert_eq!(name.to_str().unwrap(), signal_name);
+}
+
 #[test]
-fn has_value_changed_signal() {
+fn has_signals() {
     let obj = Signaler::new();
     let obj_type = obj.get_type().to_glib();
 
@@ -66,11 +82,7 @@ fn has_value_changed_signal() {
         let mut query: gobject_sys::GSignalQuery = mem::zeroed();
         gobject_sys::g_signal_query(signal_ids[0], &mut query);
 
-        assert_eq!(query.itype, obj_type);
-        assert_eq!(query.signal_id, signal_ids[0]);
-
-        let signal_name = CStr::from_ptr(query.signal_name);
-        assert_eq!(signal_name.to_str().unwrap(), "value-changed");
+        check_signal(&query, obj_type, signal_ids[0], "value-changed");
 
         assert_eq!(query.n_params, 0);
         assert!(query.param_types.is_null());
