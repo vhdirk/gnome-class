@@ -1,20 +1,22 @@
-use super::*;
 use self::cstringident::CStringIdent;
+use super::*;
 
 impl<'ast> ClassContext<'ast> {
     pub fn signal_trampolines(&self) -> Vec<Tokens> {
         // FIXME: signal handler trampolines like in glib-rs
         //
-        // unsafe extern "C" fn signalname_trampoline<P>(this: *mut ffi::InstanceName, argname: type, argname: type, f: glib_ffi:gpointer) -> type
-        // where P: IsA<InstanceName> {
+        // unsafe extern "C" fn signalname_trampoline<P>(this: *mut ffi::InstanceName, argname:
+        // type, argname: type, f: glib_ffi:gpointer) -> type where P: IsA<InstanceName> {
         //     callback_guard!();
         //     let f: &&(Fn(&P, type, type) -> type + 'static) = transmute(f);
         //
         //     // with return value:
-        //     f(&InstanceName::from_glib_none(this).downcast_unchecked(), &from_glib_none(argname), &from_glib_none(argname))).to_glib()
+        // f(&InstanceName::from_glib_none(this).downcast_unchecked(),
+        // &from_glib_none(argname), &from_glib_none(argname))).to_glib()
         //
         //     // without return value:
-        //     f(&InstanceName::from_glib_none(this).downcast_unchecked(), &from_glib_none(argname), &from_glib_none(argname)))
+        // f(&InstanceName::from_glib_none(this).downcast_unchecked(),
+        // &from_glib_none(argname), &from_glib_none(argname)))
         //
         //     // those are by-reference arguments.  For by-value arguments,
         //     from_glib(argname)
@@ -119,18 +121,15 @@ impl<'ast> ClassContext<'ast> {
 
     pub fn signal_id_names(&self) -> Vec<Ident> {
         self.signals()
-            .map(|signal| signal_id_name (signal))
+            .map(|signal| signal_id_name(signal))
             .collect()
     }
 
     pub fn signals(&'ast self) -> impl Iterator<Item = &'ast Signal> {
-        self.class
-            .slots
-            .iter()
-            .filter_map(|slot| match *slot {
-                Slot::Signal(ref s) => Some(s),
-                _ => None,
-            })
+        self.class.slots.iter().filter_map(|slot| match *slot {
+            Slot::Signal(ref s) => Some(s),
+            _ => None,
+        })
     }
 }
 
@@ -143,7 +142,10 @@ fn signal_id_name<'ast>(signal: &'ast Signal) -> Ident {
 /// From a signal called `foo` generate a `foo_trampoline` identifier.  This is used
 /// for the functions that get passed to g_signal_connect().
 pub fn signal_trampoline_name(signal: &Signal) -> Ident {
-    Ident::from(format!("{}_signal_handler_trampoline", signal.sig.name.as_ref()))
+    Ident::from(format!(
+        "{}_signal_handler_trampoline",
+        signal.sig.name.as_ref()
+    ))
 }
 
 /// From a signal called `foo` generate a `connect_foo` identifier.  This is used
