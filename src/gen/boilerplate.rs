@@ -37,6 +37,7 @@ impl<'ast> ClassContext<'ast> {
         let signal_id_names                  = &names; // reference, otherwise quote! will consume the vector
 
         let slot_default_handlers            = self.imp_slot_default_handlers();
+        let signal_emit_methods              = self.signal_emit_methods();
         let slot_assignments                 = self.slot_assignments();
         let signal_declarations              = self.signal_declarations();
 
@@ -163,6 +164,8 @@ impl<'ast> ClassContext<'ast> {
                         #get_priv_fn
 
                         #(#slot_default_handlers)*
+
+                        #(#signal_emit_methods)*
                     }
 
                     impl #InstanceNameFfi {

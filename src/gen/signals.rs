@@ -87,6 +87,36 @@ impl<'ast> ClassContext<'ast> {
             .collect()
     }
 
+    pub fn signal_emit_methods(&self) -> Vec<Tokens> {
+        self.signals()
+            .map(|signal| {
+                let emit_name = emit_signalname(signal);
+                let signal_id_name = signal_id_name(&signal);
+
+                quote_cs! {
+                    // FIXME: include signal arguments and return value in prototype
+                    #[allow(unused)]
+                    fn #emit_name(&self) {
+                        // foo/imp.rs: increment()
+                        let params: &[glib::Value] = &[
+                            (self as &glib::ToValue).to_value(),
+                            // FIXME: signal arguments
+                        ];
+
+                        unsafe {
+                            gobject_sys::g_signal_emitv(
+                                mut_override(params.as_ptr()) as *mut gobject_sys::GValue,
+                                PRIV.#signal_id_name,
+                                0, // detail
+                                ptr::null_mut(), // ptr to return GValue
+                            );
+                        }
+                    }
+                }
+            })
+            .collect()
+    }
+
     pub fn signal_id_names(&self) -> Vec<Ident> {
         self.signals()
             .map(|signal| signal_id_name (signal))
@@ -120,4 +150,10 @@ pub fn signal_trampoline_name(signal: &Signal) -> Ident {
 /// for the public methods in the InstanceExt trait.
 pub fn connect_signalname(signal: &Signal) -> Ident {
     Ident::from(format!("connect_{}", signal.sig.name.as_ref()))
+}
+
+/// From a signal called `foo` generate a `emit_foo` identifier.  This is used
+/// for the user's implementations of methods.
+fn emit_signalname(signal: &Signal) -> Ident {
+    Ident::from(format!("emit_{}", signal.sig.name.as_ref()))
 }

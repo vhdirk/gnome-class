@@ -38,7 +38,7 @@ gobject_gen! {
         pub fn set_value(&self, v: u32) {
             let private = self.get_priv();
             private.val.set(v);
-            // private.emit_value_changed();
+            self.emit_value_changed();
         }
 
         pub fn get_value(&self) -> u32 {
@@ -78,7 +78,13 @@ fn has_value_changed_signal() {
 fn connects_to_signal() {
     let obj = Signaler::new();
 
-    let _id: glib::SignalHandlerId = obj.connect_value_changed(|_| { println!("hello"); });
+    static mut EMITTED: bool = false;
+
+    let _id: glib::SignalHandlerId = obj.connect_value_changed(|_| {
+        unsafe { EMITTED = true; }
+    });
 
     obj.set_value(42);
+
+    unsafe { assert!(EMITTED); }
 }
