@@ -38,10 +38,10 @@ impl<'ast> ClassContext<'ast> {
                     Slot::Signal(ref signal) => {
                         let connect_signalname = signals::connect_signalname(signal);
                         let sig = &signal.sig;
-                        let inputs = &sig.inputs[1..]; // remove the &self, because we need &Self below
+                        let input_types = signal.sig.input_arg_types();
                         let output = &sig.output;
                         Some(quote_cs! {
-                            fn #connect_signalname<F: Fn(&Self, #(#inputs),*) -> #output + 'static>(&self, f: F) ->
+                            fn #connect_signalname<F: Fn(&Self, #input_types) -> #output + 'static>(&self, f: F) ->
                                 glib::SignalHandlerId;
                         })
                     }
@@ -90,15 +90,15 @@ impl<'ast> ClassContext<'ast> {
                         let signalname_trampoline = signals::signal_trampoline_name(signal);
                         let sig = &signal.sig;
                         let signalname_str = sig.name.as_ref();
-                        let inputs = &sig.inputs[1..]; // remove the &self, because we need &Self below
+                        let input_types = signal.sig.input_arg_types();
                         let output = &sig.output;
 
                         Some(quote_cs! {
-                            fn #connect_signalname<F: Fn(&Self, #(#inputs),*) -> #output + 'static>(&self, f: F) ->
+                            fn #connect_signalname<F: Fn(&Self, #input_types) -> #output + 'static>(&self, f: F) ->
                                 glib::SignalHandlerId
                             {
                                 unsafe {
-                                    let f: Box<Box<Fn(&Self, #(#inputs),*) -> #output + 'static>> =
+                                    let f: Box<Box<Fn(&Self, #input_types) -> #output + 'static>> =
                                         Box::new(Box::new(f));
 
                                     glib::signal::connect(self.to_glib_none().0,

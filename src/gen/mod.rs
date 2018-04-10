@@ -137,8 +137,19 @@ impl<'ast> FnSig<'ast> {
         ToGlibType(&self.output, self)
     }
 
-    /// Generates an argument list with Glib types suitable for function prototypes, without the
-    /// `&self`
+    /// Generates an argument list just with Rust types, suitable for `Fn` signatures, without `&Self`
+    ///
+    /// For example, if the `FnSig` represents a `fn foo(&self, a: bool, b: i32)`, then this
+    /// function will generate tokens for `bool, i32`.  This is useful when generating
+    /// an `Fn(&Self, bool, i32)` signature.
+    ///
+    /// Note that the first parameter `&Self` is omitted.  This is so that callers can
+    /// emit it themselves.
+    fn input_arg_types<'a>(&'a self) -> impl ToTokens + 'a {
+        ArgTypes(self)
+    }
+
+    /// Generates an argument list with Glib types suitable for function prototypes, without the `&self`
     ///
     /// For example, if the `FnSig` represents a `fn foo(&self, a: bool, b: i32)`, then this
     /// function will generate tokens for `a: glib_sys::boolean, b: i32,`.  This is useful when
@@ -283,6 +294,22 @@ impl<'ast> ToTokens for FromGlib<'ast> {
             )));
         } else {
             self.1.to_tokens(tokens);
+        }
+    }
+}
+
+struct ArgTypes<'ast>(&'ast FnSig<'ast>);
+
+impl<'ast> ToTokens for ArgTypes<'ast> {
+    fn to_tokens(&self, tokens: &mut Tokens) {
+        for arg in self.0.inputs[1..].iter() {
+            match *arg {
+                FnArg::Arg { ref ty, .. } => {
+                    ty.to_tokens(tokens);
+                    Token!(,)([Span::call_site()]).to_tokens(tokens);
+                }
+                FnArg::SelfRef(..) => unreachable!(),
+            }
         }
     }
 }

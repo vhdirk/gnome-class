@@ -29,7 +29,7 @@ impl<'ast> ClassContext<'ast> {
                 let callback_guard = glib_callback_guard();
                 let sig = &signal.sig;
                 let c_inputs = sig.input_args_with_glib_types();
-                let inputs = &sig.inputs[1..]; // remove the &self, because we need include the &P below
+                let input_types = signal.sig.input_arg_types();
                 let arg_names = sig.input_args_from_glib_types();
                 let output = &sig.output;
 
@@ -49,7 +49,7 @@ impl<'ast> ClassContext<'ast> {
                     {
                         #callback_guard
 
-                        let f: &&(Fn(&P, #(#inputs),*) -> #output + 'static) = mem::transmute(f);
+                        let f: &&(Fn(&P, #input_types) -> #output + 'static) = mem::transmute(f);
 
                         #ret
                     }
