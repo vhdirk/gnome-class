@@ -18,6 +18,9 @@ extern crate unicode_xid;
 #[macro_use]
 extern crate syn;
 
+extern crate glib_sys;
+extern crate gobject_sys;
+
 use errors::*;
 use proc_macro::TokenStream;
 use std::error::Error;
