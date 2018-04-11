@@ -71,18 +71,35 @@ impl<'ast> ClassContext<'ast> {
                 let get_type_fn_name = self.instance_get_type_fn_name();
                 let signal_id_name = signal_id_name(&signal);
                 let signal_name = CStringIdent(signal.sig.name);
+
+                assert!(signal.sig.inputs.len() > 0);
+                let n_params = (signal.sig.inputs.len() - 1) as u32;
+
+                let param_types: Vec<Path> = signal.sig.inputs.iter()
+                    .skip(1) // skip &self
+                    .map(|arg| {
+                        if let FnArg::Arg { ref ty, .. } = arg {
+                            ty.to_gtype_path()
+                        } else {
+                            unreachable!();
+                        }
+                    })
+                    .collect();
+
                 quote_cs! {
+                    let param_types = [#(#param_types),*];
+
                     PRIV.#signal_id_name =
                         gobject_sys::g_signal_newv (#signal_name as *const u8 as *const i8,
                                                     #get_type_fn_name(),
-                                                    gobject_sys::G_SIGNAL_RUN_FIRST, // flags
-                                                    ptr::null_mut(),                 // class_closure,
-                                                    None,                            // accumulator
-                                                    ptr::null_mut(),                 // accu_data
-                                                    None,                            // c_marshaller,
-                                                    gobject_sys::G_TYPE_NONE,        // return_type
-                                                    0,                               // n_params,
-                                                    ptr::null_mut()                  // param_types
+                                                    gobject_sys::G_SIGNAL_RUN_FIRST,   // flags
+                                                    ptr::null_mut(),                   // class_closure,
+                                                    None,                              // accumulator
+                                                    ptr::null_mut(),                   // accu_data
+                                                    None,                              // c_marshaller,
+                                                    gobject_sys::G_TYPE_NONE,          // return_type
+                                                    #n_params,                         // n_params,
+                                                    mut_override(param_types.as_ptr()) // param_types
                         );
                 }
             })
