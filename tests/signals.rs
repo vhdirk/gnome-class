@@ -36,7 +36,7 @@ gobject_gen! {
 
     impl Signaler {
         signal fn value_changed(&self);
-        signal fn value_changed_to(&self);
+        signal fn value_changed_to(&self, v: u32);
 
         pub fn set_value(&self, v: u32) {
             let private = self.get_priv();

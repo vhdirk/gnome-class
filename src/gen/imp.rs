@@ -32,13 +32,15 @@ impl<'ast> ClassContext<'ast> {
                     }
 
                     Slot::Signal(ref signal) => {
+                        let output = signal.sig.output_glib_type();
+                        let inputs = signal.sig.input_args_with_glib_types();
                         let signalname = signal.sig.name;
 
                         Some(quote_cs! {
                             pub #signalname: Option<unsafe extern "C" fn(
                                 this: *mut #InstanceNameFfi,
-                                // FIXME: signal arguments
-                            ) -> ()>, // FIXME: signal return value or unit
+                                #inputs
+                            ) -> #output>,
                         })
                     }
                 }
@@ -99,6 +101,7 @@ impl<'ast> ClassContext<'ast> {
                     let inputs = &sig.inputs;
                     let output = &sig.output;
                     quote_cs! {
+                        #[allow(unused_variables)] // since none of the inputs will be used
                         fn #name(#(#inputs),*) -> #output {
                             panic!("Called default signal handler {} with no implementation", stringify!(#name));
                         }
