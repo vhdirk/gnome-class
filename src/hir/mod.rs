@@ -30,7 +30,7 @@ pub struct Classes<'ast> {
 }
 #[cfg_attr(rustfmt, rustfmt_skip)]
 pub struct Class<'ast> {
-    pub name: Ident,              // Foo
+    pub name: Ident, // Foo
     pub gobject_parent: bool,
     pub parent: Tokens,           // Parent
     pub parent_ffi: Tokens,       // ffi::Parent
@@ -39,14 +39,13 @@ pub struct Class<'ast> {
 
     pub instance_private: Option<&'ast Path>,
     // pub class_private: Option<&'ast ast::PrivateStruct>
-
+    //
     // The order of these is important; it's the order of the slots in FooClass
     pub slots: Vec<Slot<'ast>>,
     // pub n_reserved_slots: usize,
-
+    //
     // pub properties: Vec<Property>,
-
-    pub overrides: HashMap<Ident, Vec<Method<'ast>>>
+    pub overrides: HashMap<Ident, Vec<Method<'ast>>>,
 }
 
 pub enum Slot<'ast> {

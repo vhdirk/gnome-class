@@ -74,19 +74,19 @@ impl<'ast> ClassContext<'ast> {
             )
         };
 
-        let InstanceNameFfi  = container_name("Ffi");
-        let ModuleName       = container_name("Mod"); // toplevel "InstanceMod" module name
-        let ClassName        = container_name("Class");
+        let InstanceNameFfi = container_name("Ffi");
+        let ModuleName = container_name("Mod"); // toplevel "InstanceMod" module name
+        let ClassName = container_name("Class");
         let PrivateClassName = container_name("ClassPrivate");
-        let InstanceExt      = container_name("Ext"); // public trait with all the class's methods
+        let InstanceExt = container_name("Ext"); // public trait with all the class's methods
 
-        let GObject          = tokens_GObject();
-        let GObjectFfi       = tokens_GObjectFfi();
-        let GObjectClassFfi  = tokens_GObjectClassFfi();
+        let GObject = tokens_GObject();
+        let GObjectFfi = tokens_GObjectFfi();
+        let GObjectClassFfi = tokens_GObjectClassFfi();
 
-        let ParentInstance    = &class.parent;
+        let ParentInstance = &class.parent;
         let ParentInstanceFfi = &class.parent_ffi;
-        let ParentClassFfi    = &class.parent_class_ffi;
+        let ParentClassFfi = &class.parent_class_ffi;
 
         ClassContext {
             program,
@@ -137,7 +137,8 @@ impl<'ast> FnSig<'ast> {
         ToGlibType(&self.output, self)
     }
 
-    /// Generates an argument list just with Rust types, suitable for `Fn` signatures, without `&Self`
+    /// Generates an argument list just with Rust types, suitable for `Fn` signatures, without
+    /// `&Self`
     ///
     /// For example, if the `FnSig` represents a `fn foo(&self, a: bool, b: i32)`, then this
     /// function will generate tokens for `bool, i32`.  This is useful when generating
@@ -149,7 +150,8 @@ impl<'ast> FnSig<'ast> {
         ArgTypes(self)
     }
 
-    /// Generates an argument list with Glib types suitable for function prototypes, without the `&self`
+    /// Generates an argument list with Glib types suitable for function prototypes, without the
+    /// `&self`
     ///
     /// For example, if the `FnSig` represents a `fn foo(&self, a: bool, b: i32)`, then this
     /// function will generate tokens for `a: glib_sys::boolean, b: i32,`.  This is useful when

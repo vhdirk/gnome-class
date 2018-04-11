@@ -17,34 +17,32 @@ impl<'ast> ClassContext<'ast> {
         self.class
             .slots
             .iter()
-            .filter_map(|slot| {
-                match *slot {
-                    Slot::Method(Method { public: false, .. }) => None,
+            .filter_map(|slot| match *slot {
+                Slot::Method(Method { public: false, .. }) => None,
 
-                    Slot::Method(Method {
-                        public: true,
-                        ref sig,
-                        ..
+                Slot::Method(Method {
+                    public: true,
+                    ref sig,
+                    ..
+                })
+                | Slot::VirtualMethod(VirtualMethod { ref sig, .. }) => {
+                    let name = sig.name;
+                    let inputs = &sig.inputs;
+                    let output = &sig.output;
+                    Some(quote_cs! {
+                        fn #name(#(#inputs),*) -> #output;
                     })
-                    | Slot::VirtualMethod(VirtualMethod { ref sig, .. }) => {
-                        let name = sig.name;
-                        let inputs = &sig.inputs;
-                        let output = &sig.output;
-                        Some(quote_cs! {
-                            fn #name(#(#inputs),*) -> #output;
-                        })
-                    }
+                }
 
-                    Slot::Signal(ref signal) => {
-                        let connect_signalname = signals::connect_signalname(signal);
-                        let sig = &signal.sig;
-                        let input_types = signal.sig.input_arg_types();
-                        let output = &sig.output;
-                        Some(quote_cs! {
-                            fn #connect_signalname<F: Fn(&Self, #input_types) -> #output + 'static>(&self, f: F) ->
-                                glib::SignalHandlerId;
-                        })
-                    }
+                Slot::Signal(ref signal) => {
+                    let connect_signalname = signals::connect_signalname(signal);
+                    let sig = &signal.sig;
+                    let input_types = signal.sig.input_arg_types();
+                    let output = &sig.output;
+                    Some(quote_cs! {
+                        fn #connect_signalname<F: Fn(&Self, #input_types) -> #output + 'static>(&self, f: F) ->
+                            glib::SignalHandlerId;
+                    })
                 }
             })
             .collect()
@@ -56,59 +54,57 @@ impl<'ast> ClassContext<'ast> {
         self.class
             .slots
             .iter()
-            .filter_map(|slot| {
-                match *slot {
-                    Slot::Method(Method { public: false, .. }) => None,
+            .filter_map(|slot| match *slot {
+                Slot::Method(Method { public: false, .. }) => None,
 
-                    Slot::Method(Method {
-                        public: true,
-                        ref sig,
-                        ..
+                Slot::Method(Method {
+                    public: true,
+                    ref sig,
+                    ..
+                })
+                | Slot::VirtualMethod(VirtualMethod { ref sig, .. }) => {
+                    let name = sig.name;
+                    let ffi_name = self.method_ffi_name(name.as_ref());
+                    let arg_names = sig.input_args_to_glib_types();
+                    let value = quote_cs! {
+                        unsafe {
+                            imp::#ffi_name(self.to_glib_none().0,
+                                           #arg_names)
+                        }
+                    };
+                    let output_from = sig.ret_from_glib_fn(&value);
+                    let inputs = &sig.inputs;
+                    let output = &sig.output;
+                    Some(quote_cs! {
+                        fn #name(#(#inputs),*) -> #output {
+                            #output_from
+                        }
                     })
-                    | Slot::VirtualMethod(VirtualMethod { ref sig, .. }) => {
-                        let name = sig.name;
-                        let ffi_name = self.method_ffi_name(name.as_ref());
-                        let arg_names = sig.input_args_to_glib_types();
-                        let value = quote_cs! {
+                }
+
+                Slot::Signal(ref signal) => {
+                    let connect_signalname = signals::connect_signalname(signal);
+                    let signalname_trampoline = signals::signal_trampoline_name(signal);
+                    let sig = &signal.sig;
+                    let signalname_str = sig.name.as_ref();
+                    let input_types = signal.sig.input_arg_types();
+                    let output = &sig.output;
+
+                    Some(quote_cs! {
+                        fn #connect_signalname<F: Fn(&Self, #input_types) -> #output + 'static>(&self, f: F) ->
+                            glib::SignalHandlerId
+                        {
                             unsafe {
-                                imp::#ffi_name(self.to_glib_none().0,
-                                               #arg_names)
-                            }
-                        };
-                        let output_from = sig.ret_from_glib_fn(&value);
-                        let inputs = &sig.inputs;
-                        let output = &sig.output;
-                        Some(quote_cs! {
-                            fn #name(#(#inputs),*) -> #output {
-                                #output_from
-                            }
-                        })
-                    }
+                                let f: Box<Box<Fn(&Self, #input_types) -> #output + 'static>> =
+                                    Box::new(Box::new(f));
 
-                    Slot::Signal(ref signal) => {
-                        let connect_signalname = signals::connect_signalname(signal);
-                        let signalname_trampoline = signals::signal_trampoline_name(signal);
-                        let sig = &signal.sig;
-                        let signalname_str = sig.name.as_ref();
-                        let input_types = signal.sig.input_arg_types();
-                        let output = &sig.output;
-
-                        Some(quote_cs! {
-                            fn #connect_signalname<F: Fn(&Self, #input_types) -> #output + 'static>(&self, f: F) ->
-                                glib::SignalHandlerId
-                            {
-                                unsafe {
-                                    let f: Box<Box<Fn(&Self, #input_types) -> #output + 'static>> =
-                                        Box::new(Box::new(f));
-
-                                    glib::signal::connect(self.to_glib_none().0,
-                                                          #signalname_str,
-                                                          mem::transmute(#signalname_trampoline::<Self> as usize),
-                                                          Box::into_raw(f) as *mut _)
-                                }
+                                glib::signal::connect(self.to_glib_none().0,
+                                                      #signalname_str,
+                                                      mem::transmute(#signalname_trampoline::<Self> as usize),
+                                                      Box::into_raw(f) as *mut _)
                             }
-                        })
-                    }
+                        }
+                    })
                 }
             })
             .collect()
