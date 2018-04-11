@@ -96,6 +96,13 @@ fn has_signals() {
         gobject_sys::g_signal_query(signal_ids[1], &mut query);
 
         check_signal(&query, obj_type, signal_ids[1], "value-changed-to");
+/*
+        assert_eq!(query.n_params, 1);
+        assert!(!query.param_types.is_null());
+
+        let param_types = slice::from_raw_parts(query.param_types, query.n_params as usize);
+        assert_eq!(param_types[0], gobject_sys::G_TYPE_UINT);
+*/
     }
 }
 
