@@ -14,10 +14,7 @@ use quote::{ToTokens, Tokens};
 use syn::buffer::TokenBuffer;
 use syn::punctuated::Punctuated;
 use syn::synom::Synom;
-use syn::{self, Block, Ident, Path, ReturnType};
-
-use glib_sys;
-use gobject_sys;
+use syn::{self, parse_str, Block, Ident, Path, ReturnType};
 
 use super::ast;
 use super::checking::*;
@@ -110,24 +107,24 @@ pub enum Ty<'ast> {
 }
 
 impl<'ast> Ty<'ast> {
-    fn to_gtype(&self) -> glib_sys::GType {
+    pub fn to_gtype_string(&self) -> &'static str {
         match *self {
-            Ty::Unit => gobject_sys::G_TYPE_NONE,
-            Ty::Char(_) => gobject_sys::G_TYPE_UINT, // <char as ToGlib>::GlibType = u32
-            Ty::Bool(_) => gobject_sys::G_TYPE_BOOLEAN,
+            Ty::Unit => "gobject_sys::G_TYPE_NONE",
+            Ty::Char(_) => "gobject_sys::G_TYPE_UINT", // <char as ToGlib>::GlibType = u32
+            Ty::Bool(_) => "gobject_sys::G_TYPE_BOOLEAN",
             Ty::Borrowed(_) => unimplemented!(),
 
             Ty::Integer(ref ident) => match ident.as_ref() {
-                "i8" => gobject_sys::G_TYPE_CHAR,
+                "i8" => "gobject_sys::G_TYPE_CHAR",
                 "i16" => unimplemented!("should we promote i16 to i32?"),
-                "i32" => gobject_sys::G_TYPE_INT,
-                "i64" => gobject_sys::G_TYPE_INT64,
+                "i32" => "gobject_sys::G_TYPE_INT",
+                "i64" => "gobject_sys::G_TYPE_INT64",
                 "isize" => unimplemented!(),
 
-                "u8" => gobject_sys::G_TYPE_UCHAR,
+                "u8" => "gobject_sys::G_TYPE_UCHAR",
                 "u16" => unimplemented!("should we promote u16 to u32?"),
-                "u32" => gobject_sys::G_TYPE_UINT,
-                "u64" => gobject_sys::G_TYPE_UINT64,
+                "u32" => "gobject_sys::G_TYPE_UINT",
+                "u64" => "gobject_sys::G_TYPE_UINT64",
                 "usize" => unimplemented!(),
 
                 _ => unreachable!(),
@@ -136,6 +133,14 @@ impl<'ast> Ty<'ast> {
             Ty::Owned(_) => unimplemented!(),
         }
     }
+
+    pub fn to_gtype_path(&self) -> Path {
+        path_from_string(self.to_gtype_string())
+    }
+}
+
+fn path_from_string(s: &str) -> Path {
+    parse_str::<Path>(s).unwrap()
 }
 
 impl<'ast> Program<'ast> {
@@ -537,48 +542,48 @@ pub mod tests {
     }
 
     fn maps_ty_to_gtype() {
-        assert_eq!(Ty::Unit.to_gtype(), gobject_sys::G_TYPE_NONE);
+        assert_eq!(Ty::Unit.to_gtype_string(), "gobject_sys::G_TYPE_NONE");
         assert_eq!(
-            Ty::Char(Ident::new("char", Span::call_site())).to_gtype(),
-            gobject_sys::G_TYPE_UINT
+            Ty::Char(Ident::new("char", Span::call_site())).to_gtype_string(),
+            "gobject_sys::G_TYPE_UINT"
         );
         assert_eq!(
-            Ty::Bool(Ident::new("bool", Span::call_site())).to_gtype(),
-            gobject_sys::G_TYPE_BOOLEAN
+            Ty::Bool(Ident::new("bool", Span::call_site())).to_gtype_string(),
+            "gobject_sys::G_TYPE_BOOLEAN"
         );
 
-        // assert_eq!(Ty::Borrowed(...).to_gtype(), ...);
+        // assert_eq!(Ty::Borrowed(...).to_gtype_string(), ...);
 
         assert_eq!(
-            Ty::Integer(Ident::new("i8", Span::call_site())).to_gtype(),
-            gobject_sys::G_TYPE_CHAR
+            Ty::Integer(Ident::new("i8", Span::call_site())).to_gtype_string(),
+            "gobject_sys::G_TYPE_CHAR"
         );
         // assert_eq!(Ty::Integer(Ident::new("i16", Span::call_site())).to_gtype(), ...);
         assert_eq!(
-            Ty::Integer(Ident::new("i32", Span::call_site())).to_gtype(),
-            gobject_sys::G_TYPE_INT
+            Ty::Integer(Ident::new("i32", Span::call_site())).to_gtype_string(),
+            "gobject_sys::G_TYPE_INT"
         );
         assert_eq!(
-            Ty::Integer(Ident::new("i64", Span::call_site())).to_gtype(),
-            gobject_sys::G_TYPE_INT64
+            Ty::Integer(Ident::new("i64", Span::call_site())).to_gtype_string(),
+            "gobject_sys::G_TYPE_INT64"
         );
-        // assert_eq!(Ty::Integer(Ident::new("isize", Span::call_site())).to_gtype(), ...);
+        // assert_eq!(Ty::Integer(Ident::new("isize", Span::call_site())).to_gtype_string(), ...);
 
         assert_eq!(
-            Ty::Integer(Ident::new("u8", Span::call_site())).to_gtype(),
-            gobject_sys::G_TYPE_UCHAR
+            Ty::Integer(Ident::new("u8", Span::call_site())).to_gtype_string(),
+            "gobject_sys::G_TYPE_UCHAR"
         );
-        // assert_eq!(Ty::Integer(Ident::new("u16", Span::call_site())).to_gtype(), ...);
+        // assert_eq!(Ty::Integer(Ident::new("u16", Span::call_site())).to_gtype_string(), ...);
         assert_eq!(
-            Ty::Integer(Ident::new("u32", Span::call_site())).to_gtype(),
-            gobject_sys::G_TYPE_UINT
+            Ty::Integer(Ident::new("u32", Span::call_site())).to_gtype_string(),
+            "gobject_sys::G_TYPE_UINT"
         );
         assert_eq!(
-            Ty::Integer(Ident::new("u64", Span::call_site())).to_gtype(),
-            gobject_sys::G_TYPE_UINT64
+            Ty::Integer(Ident::new("u64", Span::call_site())).to_gtype_string(),
+            "gobject_sys::G_TYPE_UINT64"
         );
-        // assert_eq!(Ty::Integer(Ident::new("usize", Span::call_site())).to_gtype(), ...);
+        // assert_eq!(Ty::Integer(Ident::new("usize", Span::call_site())).to_gtype_string(), ...);
 
-        // assert_eq!(Ty::Owned(...).to_glib(), ...);
+        // assert_eq!(Ty::Owned(...).to_gtype_string(), ...);
     }
 }
