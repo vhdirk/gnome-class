@@ -8,8 +8,8 @@ extern crate glib;
 use gobject_gen::gobject_gen;
 
 use std::cell::RefCell;
-use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::Arc;
 
 #[derive(Clone)]
 pub struct DropCounter {

@@ -1,12 +1,12 @@
 // We give `ClassName` variables an identifier that uses upper-case.
 #![allow(non_snake_case)]
 
-use quote::{Tokens, ToTokens};
-use syn::{Ident, Path};
 use proc_macro2::{Delimiter, Group, Span, TokenTree};
+use quote::{ToTokens, Tokens};
+use syn::{Ident, Path};
 
-use hir::*;
 use errors::*;
+use hir::*;
 
 mod boilerplate;
 mod cstringident;
@@ -17,8 +17,8 @@ mod signals;
 use glib_utils::*;
 
 pub fn classes(program: &Program) -> Result<Tokens> {
-    let class_tokens =
-        program.classes
+    let class_tokens = program
+        .classes
         .iter()
         .map(|class| {
             let cx = ClassContext::new(program, class);
@@ -47,6 +47,7 @@ struct ClassContext<'ast> {
 }
 
 impl<'ast> ClassContext<'ast> {
+    #[cfg_attr(rustfmt, rustfmt_skip)]
     pub fn new(program: &'ast Program, class: &'ast Class) -> Self {
         // This function creates a ClassContext by generating the
         // commonly-used symbol names for the class in question, for
@@ -112,7 +113,11 @@ impl<'ast> ClassContext<'ast> {
 
     fn exported_fn_name(&self, method_name: &str) -> Ident {
         Ident::new(
-            &format!("{}_{}", lower_case_instance_name(self.InstanceName.as_ref()), method_name),
+            &format!(
+                "{}_{}",
+                lower_case_instance_name(self.InstanceName.as_ref()),
+                method_name
+            ),
             Span::call_site(),
         )
     }
@@ -132,11 +137,12 @@ impl<'ast> FnSig<'ast> {
         ToGlibType(&self.output, self)
     }
 
-    /// Generates an argument list with Glib types suitable for function prototypes, without the `&self`
+    /// Generates an argument list with Glib types suitable for function prototypes, without the
+    /// `&self`
     ///
     /// For example, if the `FnSig` represents a `fn foo(&self, a: bool, b: i32)`, then this
-    /// function will generate tokens for `a: glib_sys::boolean, b: i32,`.  This is useful when generating
-    /// a prototype for an `unsafe extern "C" fn` callable from C.
+    /// function will generate tokens for `a: glib_sys::boolean, b: i32,`.  This is useful when
+    /// generating a prototype for an `unsafe extern "C" fn` callable from C.
     ///
     /// Note that the first parameter `&self` is omitted.  This is so that callers
     /// can emit a suitable C pointer instead of a Rust `&self`.
@@ -208,8 +214,7 @@ impl<'ast> ToTokens for ToGlibType<'ast> {
     fn to_tokens(&self, tokens: &mut Tokens) {
         match *self.0 {
             Ty::Unit => self.0.to_tokens(tokens),
-            Ty::Char(i) |
-            Ty::Bool(i) => {
+            Ty::Char(i) | Ty::Bool(i) => {
                 (quote_cs! {
                     <#i as ToGlib>::GlibType
                 }).to_tokens(tokens);
@@ -232,11 +237,9 @@ impl<'ast, T: ToTokens> ToTokens for ToGlib<'ast, T> {
         let expr = &self.1;
         match *self.0 {
             // no conversion necessary
-            Ty::Unit |
-            Ty::Integer(_) => self.1.to_tokens(tokens),
+            Ty::Unit | Ty::Integer(_) => self.1.to_tokens(tokens),
 
-            Ty::Char(i) |
-            Ty::Bool(i) => {
+            Ty::Char(i) | Ty::Bool(i) => {
                 (quote_cs! {
                     <#i as ToGlib>::to_glib(&#expr)
                 }).to_tokens(tokens);
@@ -255,34 +258,29 @@ struct FromGlib<'ast>(&'ast Ty<'ast>, Tokens);
 
 impl<'ast> ToTokens for FromGlib<'ast> {
     fn to_tokens(&self, tokens: &mut Tokens) {
-        let needs_conversion =
-            match *self.0 {
-                Ty::Unit => { false } // no conversion necessary
-                Ty::Char(i) |
-                Ty::Bool(i) => {
-                    (quote_cs! {
-                        <#i as FromGlib<_>>::from_glib
-                    }).to_tokens(tokens);
-                    true
-                }
-                Ty::Borrowed(ref t) => {
-                    (quote_cs! {
-                        &<#t as FromGlibPtrBorrow<_>>::from_glib_borrow
-                    }).to_tokens(tokens);
-                    true
-                }
-                Ty::Integer(_) => { false } // no conversion necessary
-                Ty::Owned(_) => panic!("unimplemented from glib on owned types"),
-            };
+        let needs_conversion = match *self.0 {
+            Ty::Unit => false, // no conversion necessary
+            Ty::Char(i) | Ty::Bool(i) => {
+                (quote_cs! {
+                    <#i as FromGlib<_>>::from_glib
+                }).to_tokens(tokens);
+                true
+            }
+            Ty::Borrowed(ref t) => {
+                (quote_cs! {
+                    &<#t as FromGlibPtrBorrow<_>>::from_glib_borrow
+                }).to_tokens(tokens);
+                true
+            }
+            Ty::Integer(_) => false, // no conversion necessary
+            Ty::Owned(_) => panic!("unimplemented from glib on owned types"),
+        };
 
         if needs_conversion {
-            tokens.append(
-                TokenTree::Group(
-                    Group::new(
-                        Delimiter::Parenthesis,
-                        self.1.clone().into_tokens().into(),
-                    )
-                ));
+            tokens.append(TokenTree::Group(Group::new(
+                Delimiter::Parenthesis,
+                self.1.clone().into_tokens().into(),
+            )));
         } else {
             self.1.to_tokens(tokens);
         }
@@ -295,7 +293,11 @@ impl<'ast> ToTokens for FnArgsWithGlibTypes<'ast> {
     fn to_tokens(&self, tokens: &mut Tokens) {
         for arg in self.0.inputs[1..].iter() {
             match *arg {
-                FnArg::Arg { name, ref ty, mutbl: _ } => {
+                FnArg::Arg {
+                    name,
+                    ref ty,
+                    mutbl: _,
+                } => {
                     name.to_tokens(tokens);
                     Token!(:)([Span::call_site()]).to_tokens(tokens);
                     ToGlibType(ty, self.0).to_tokens(tokens);
@@ -303,7 +305,6 @@ impl<'ast> ToTokens for FnArgsWithGlibTypes<'ast> {
                 }
                 FnArg::SelfRef(..) => unreachable!(),
             }
-
         }
     }
 }
@@ -314,7 +315,11 @@ impl<'ast> ToTokens for ArgNamesFromGlib<'ast> {
     fn to_tokens(&self, tokens: &mut Tokens) {
         for arg in self.0 {
             match *arg {
-                FnArg::Arg { ref name, ref ty, mutbl: _ } => {
+                FnArg::Arg {
+                    ref name,
+                    ref ty,
+                    mutbl: _,
+                } => {
                     let mut name_tokens = Tokens::new();
                     name.to_tokens(&mut name_tokens);
                     FromGlib(ty, name_tokens).to_tokens(tokens);
@@ -322,7 +327,6 @@ impl<'ast> ToTokens for ArgNamesFromGlib<'ast> {
                 }
                 FnArg::SelfRef(..) => unreachable!(),
             }
-
         }
     }
 }
@@ -333,13 +337,16 @@ impl<'ast> ToTokens for ArgNamesToGlib<'ast> {
     fn to_tokens(&self, tokens: &mut Tokens) {
         for arg in self.0 {
             match *arg {
-                FnArg::Arg { ref ty, name, mutbl: _ } => {
+                FnArg::Arg {
+                    ref ty,
+                    name,
+                    mutbl: _,
+                } => {
                     ToGlib(ty, name).to_tokens(tokens);
                     Token!(,)([Span::call_site()]).to_tokens(tokens);
                 }
                 FnArg::SelfRef(..) => unreachable!(),
             }
-
         }
     }
 }

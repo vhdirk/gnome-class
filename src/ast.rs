@@ -1,29 +1,25 @@
-//use lalrpop_intern::InternedString;
-//use quote::Tokens;
-use syn::{Ident, Path, FnArg, ReturnType, Block};
-use syn::{Attribute, Lit};
+// use lalrpop_intern::InternedString;
+// use quote::Tokens;
 use syn::punctuated::Punctuated;
+use syn::{Attribute, Lit};
+use syn::{Block, FnArg, Ident, Path, ReturnType};
 
 pub struct Program {
-    pub items: Vec<Item>
+    pub items: Vec<Item>,
 }
 
 impl Program {
     pub fn classes<'a>(&'a self) -> impl Iterator<Item = &'a Class> + 'a {
-        self.items.iter().filter_map(|item| {
-            match *item {
-                Item::Class(ref c) => Some(c),
-                _ => None,
-            }
+        self.items.iter().filter_map(|item| match *item {
+            Item::Class(ref c) => Some(c),
+            _ => None,
         })
     }
 
     pub fn impls<'a>(&'a self) -> impl Iterator<Item = &'a Impl> + 'a {
-        self.items.iter().filter_map(|item| {
-            match *item {
-                Item::Impl(ref i) => Some(i),
-                _ => None,
-            }
+        self.items.iter().filter_map(|item| match *item {
+            Item::Impl(ref i) => Some(i),
+            _ => None,
         })
     }
 }
@@ -34,7 +30,8 @@ pub enum Item {
 }
 
 pub fn get_program_classes<'a>(program: &'a Program) -> Vec<&'a Class> {
-    program.items
+    program
+        .items
         .iter()
         .filter_map(|item| {
             if let Item::Class(ref c) = *item {
@@ -49,14 +46,14 @@ pub fn get_program_classes<'a>(program: &'a Program) -> Vec<&'a Class> {
 pub struct Class {
     pub name: Ident,
     pub extends: Option<Path>,
-    pub items: Vec<ClassItem>
+    pub items: Vec<ClassItem>,
 }
 
 // similar to syn::ItemImpl
 pub struct Impl {
     pub trait_: Option<Ident>,
     pub self_path: Ident,
-    pub items: Vec<ImplItem>
+    pub items: Vec<ImplItem>,
 }
 
 pub enum ClassItem {
@@ -74,9 +71,9 @@ pub enum ImplItemKind {
 }
 
 pub struct ImplItemMethod {
-    pub public: bool, // requires body
+    pub public: bool,   // requires body
     pub virtual_: bool, // implies public, doesn't need body
-    pub signal: bool, // ignore
+    pub signal: bool,   // ignore
     pub name: Ident,
     pub inputs: Punctuated<FnArg, Token!(,)>, // must start with &self
     pub output: ReturnType,

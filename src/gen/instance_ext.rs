@@ -118,7 +118,6 @@ impl<'ast> ClassContext<'ast> {
         self.exported_fn_name(method)
     }
 
-    //
     // pub fn methods(&self) -> impl Iterator<Item = &'ast Method> {
     // self.class
     // .items

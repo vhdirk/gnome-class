@@ -10,11 +10,11 @@ use std::collections::HashMap;
 
 use proc_macro::TokenStream;
 use proc_macro2::{Delimiter, Group, Span, TokenTree};
-use quote::{Tokens, ToTokens};
-use syn::{self, Ident, Path, Block, ReturnType};
+use quote::{ToTokens, Tokens};
+use syn::buffer::TokenBuffer;
 use syn::punctuated::Punctuated;
 use syn::synom::Synom;
-use syn::buffer::TokenBuffer;
+use syn::{self, Block, Ident, Path, ReturnType};
 
 use super::ast;
 use super::checking::*;
@@ -28,7 +28,7 @@ pub struct Program<'ast> {
 pub struct Classes<'ast> {
     items: HashMap<Ident, Class<'ast>>,
 }
-
+#[cfg_attr(rustfmt, rustfmt_skip)]
 pub struct Class<'ast> {
     pub name: Ident,              // Foo
     pub gobject_parent: bool,
@@ -52,7 +52,7 @@ pub struct Class<'ast> {
 pub enum Slot<'ast> {
     Method(Method<'ast>),
     VirtualMethod(VirtualMethod<'ast>),
-    Signal(Signal<'ast>)
+    Signal(Signal<'ast>),
 }
 
 pub struct Method<'ast> {
@@ -89,7 +89,7 @@ pub enum FnArg<'ast> {
         mutbl: Option<Token![mut]>,
         name: Ident,
         ty: Ty<'ast>,
-    }
+    },
 }
 
 pub struct Signal<'ast> {
@@ -119,9 +119,7 @@ impl<'ast> Program<'ast> {
             classes.add_impl(impl_)?;
         }
 
-        Ok(Program {
-            classes: classes,
-        })
+        Ok(Program { classes })
     }
 }
 
@@ -140,23 +138,27 @@ impl<'ast> Classes<'ast> {
         self.items.iter().find(|c| c.1.name == name).unwrap().1
     }
 
-    fn add(&mut self, ast_class: &'ast ast::Class) -> Result<()>
-    {
-        let prev = self.items.insert(ast_class.name, Class {
-            name: ast_class.name,
-            gobject_parent: ast_class.extends.is_none(),
-            parent: tokens_ParentInstance(ast_class),
-            parent_ffi: tokens_ParentInstanceFfi(ast_class),
-            parent_class_ffi: tokens_ParentClassFfi(ast_class),
-            implements: Vec::new(),
-            instance_private: ast_class.items.iter().filter_map(|i| {
-                match *i {
-                    ast::ClassItem::InstancePrivate(ref ip) => Some(&ip.path),
-                }
-            }).next(),
-            slots: Vec::new(),
-            overrides: HashMap::new(),
-        });
+    fn add(&mut self, ast_class: &'ast ast::Class) -> Result<()> {
+        let prev = self.items.insert(
+            ast_class.name,
+            Class {
+                name: ast_class.name,
+                gobject_parent: ast_class.extends.is_none(),
+                parent: tokens_ParentInstance(ast_class),
+                parent_ffi: tokens_ParentInstanceFfi(ast_class),
+                parent_class_ffi: tokens_ParentClassFfi(ast_class),
+                implements: Vec::new(),
+                instance_private: ast_class
+                    .items
+                    .iter()
+                    .filter_map(|i| match *i {
+                        ast::ClassItem::InstancePrivate(ref ip) => Some(&ip.path),
+                    })
+                    .next(),
+                slots: Vec::new(),
+                overrides: HashMap::new(),
+            },
+        );
         if prev.is_some() {
             bail!("redefinition of class `{}`", ast_class.name);
         }
@@ -187,16 +189,21 @@ impl<'ast> Classes<'ast> {
                         bail!("overrides are always public, no `pub` needed")
                     }
                     let method = match class.translate_method(item)? {
-                        Slot::VirtualMethod(VirtualMethod { sig, body: Some(body) }) => {
-                            Method { public: false, sig, body }
-                        }
+                        Slot::VirtualMethod(VirtualMethod {
+                            sig,
+                            body: Some(body),
+                        }) => Method {
+                            public: false,
+                            sig,
+                            body,
+                        },
                         Slot::VirtualMethod(VirtualMethod { .. }) => {
-                            bail!("overrides must provide a body for virtual \
-                                   methods");
+                            bail!("overrides must provide a body for virtual methods");
                         }
                         _ => unreachable!(),
                     };
-                    class.overrides
+                    class
+                        .overrides
                         .entry(parent_class)
                         .or_insert(Vec::new())
                         .push(method);
@@ -229,18 +236,20 @@ impl<'ast> Class<'ast> {
         }
     }
 
-    fn translate_method(&mut self, method: &'ast ast::ImplItemMethod)
-        -> Result<Slot<'ast>>
-    {
+    fn translate_method(&mut self, method: &'ast ast::ImplItemMethod) -> Result<Slot<'ast>> {
         if method.signal {
             if method.public {
-                bail!("function `{}` is a signal so it doesn't need to be public",
-                      method.name)
+                bail!(
+                    "function `{}` is a signal so it doesn't need to be public",
+                    method.name
+                )
             }
 
             if method.virtual_ {
-                bail!("function `{}` is a signal so it doesn't need to be virtual",
-                      method.name)
+                bail!(
+                    "function `{}` is a signal so it doesn't need to be virtual",
+                    method.name
+                )
             }
 
             let sig = self.extract_sig(method)?;
@@ -251,8 +260,10 @@ impl<'ast> Class<'ast> {
             }))
         } else if method.virtual_ {
             if method.public {
-                bail!("function `{}` is virtual so it doesn't need to be public",
-                      method.name)
+                bail!(
+                    "function `{}` is virtual so it doesn't need to be public",
+                    method.name
+                )
             }
             let sig = self.extract_sig(method)?;
             Ok(Slot::VirtualMethod(VirtualMethod {
@@ -264,9 +275,10 @@ impl<'ast> Class<'ast> {
             Ok(Slot::Method(Method {
                 sig,
                 public: method.public,
-                body: method.body.as_ref().ok_or_else(|| {
-                    format!("function `{}` requires a body", method.name)
-                })?,
+                body: method
+                    .body
+                    .as_ref()
+                    .ok_or_else(|| format!("function `{}` requires a body", method.name))?,
             }))
         }
     }
@@ -286,21 +298,23 @@ impl<'ast> Class<'ast> {
         }
     }
 
-    fn extract_inputs(&mut self, punc: &'ast Punctuated<syn::FnArg, Token!(,)>) -> Result<Vec<FnArg<'ast>>> {
-        punc.iter().map(|arg| {
-            match *arg {
-                syn::FnArg::Captured(syn::ArgCaptured { ref pat, ref ty, .. }) => {
+    fn extract_inputs(
+        &mut self,
+        punc: &'ast Punctuated<syn::FnArg, Token!(,)>,
+    ) -> Result<Vec<FnArg<'ast>>> {
+        punc.iter()
+            .map(|arg| match *arg {
+                syn::FnArg::Captured(syn::ArgCaptured {
+                    ref pat, ref ty, ..
+                }) => {
                     let (name, mutbl) = match *pat {
                         syn::Pat::Ident(syn::PatIdent {
                             by_ref: None,
                             mutability: m,
                             ident,
                             subpat: None,
-                        }) => {
-                            (ident, m)
-                        }
-                        _ => bail!("only bare identifiers are allowed as \
-                                    argument patterns"),
+                        }) => (ident, m),
+                        _ => bail!("only bare identifiers are allowed as argument patterns"),
                     };
 
                     Ok(FnArg::Arg {
@@ -314,26 +328,19 @@ impl<'ast> Class<'ast> {
                     lifetime: None,
                     mutability: None,
                     self_token,
-                }) => {
-                    Ok(FnArg::SelfRef(and_token, self_token))
-                }
+                }) => Ok(FnArg::SelfRef(and_token, self_token)),
                 syn::FnArg::SelfRef(syn::ArgSelfRef {
                     mutability: Some(..),
                     ..
-                }) => {
-                    bail!("&mut self not implemented yet")
-                }
+                }) => bail!("&mut self not implemented yet"),
                 syn::FnArg::SelfRef(syn::ArgSelfRef {
-                    lifetime: Some(..),
-                    ..
-                }) => {
-                    bail!("lifetime arguments on self not implemented yet")
-                }
+                    lifetime: Some(..), ..
+                }) => bail!("lifetime arguments on self not implemented yet"),
                 syn::FnArg::SelfValue(_) => bail!("by-value self not implemented"),
                 syn::FnArg::Inferred(_) => bail!("cannot have inferred function arguments"),
                 syn::FnArg::Ignored(_) => bail!("cannot have ignored function arguments"),
-            }
-        }).collect()
+            })
+            .collect()
     }
 
     fn extract_ty(&mut self, t: &'ast syn::Type) -> Result<Ty<'ast>> {
@@ -341,15 +348,23 @@ impl<'ast> Class<'ast> {
             syn::Type::Slice(_) => bail!("slice types not implemented yet"),
             syn::Type::Array(_) => bail!("array types not implemented yet"),
             syn::Type::Ptr(_) => bail!("ptr types not implemented yet"),
-            syn::Type::Reference(syn::TypeReference { lifetime: Some(_), .. }) => {
-                bail!("borrowed types with lifetimes not implemented yet")
-            }
-            syn::Type::Reference(syn::TypeReference { lifetime: None, ref elem, ref mutability, .. }) => {
+            syn::Type::Reference(syn::TypeReference {
+                lifetime: Some(_), ..
+            }) => bail!("borrowed types with lifetimes not implemented yet"),
+            syn::Type::Reference(syn::TypeReference {
+                lifetime: None,
+                ref elem,
+                ref mutability,
+                ..
+            }) => {
                 if let Some(_) = *mutability {
                     bail!("mutable borrowed pointers not implemented");
                 }
                 let path = match **elem {
-                    syn::Type::Path(syn::TypePath { qself: None, ref path }) => path,
+                    syn::Type::Path(syn::TypePath {
+                        qself: None,
+                        ref path,
+                    }) => path,
                     _ => bail!("only borrowed pointers to paths supported"),
                 };
                 let ty = self.extract_ty_path(path)?;
@@ -367,9 +382,10 @@ impl<'ast> Class<'ast> {
             syn::Type::Path(syn::TypePath { qself: Some(_), .. }) => {
                 bail!("path types with qualified self (`as` syntax) not allowed")
             }
-            syn::Type::Path(syn::TypePath { qself: None, ref path }) => {
-                self.extract_ty_path(path)
-            }
+            syn::Type::Path(syn::TypePath {
+                qself: None,
+                ref path,
+            }) => self.extract_ty_path(path),
             syn::Type::TraitObject(_) => bail!("trait objects not implemented yet"),
             syn::Type::ImplTrait(_) => bail!("trait objects not implemented yet"),
             syn::Type::Paren(syn::TypeParen { ref elem, .. }) => self.extract_ty(elem),
@@ -381,16 +397,14 @@ impl<'ast> Class<'ast> {
     }
 
     fn extract_ty_path(&mut self, t: &'ast syn::Path) -> Result<Ty<'ast>> {
-        if t.segments.iter().any(|segment| {
-            match segment.arguments {
-                syn::PathArguments::None => false,
-                _ => true,
-            }
+        if t.segments.iter().any(|segment| match segment.arguments {
+            syn::PathArguments::None => false,
+            _ => true,
         }) {
             bail!("type or lifetime parameters not allowed")
         }
         if t.leading_colon.is_some() || t.segments.len() > 1 {
-            return Ok(Ty::Owned(t))
+            return Ok(Ty::Owned(t));
         }
 
         // let ident = t.segments.get(0).item().ident;
@@ -399,16 +413,7 @@ impl<'ast> Class<'ast> {
         match ident.as_ref() {
             "char" => Ok(Ty::Char(ident)),
             "bool" => Ok(Ty::Bool(ident)),
-            "i8" |
-            "i16" |
-            "i32" |
-            "i64" |
-            "isize" |
-            "u8" |
-            "u16" |
-            "u32" |
-            "u64" |
-            "usize" => {
+            "i8" | "i16" | "i32" | "i64" | "isize" | "u8" | "u16" | "u32" | "u64" | "usize" => {
                 Ok(Ty::Integer(ident))
             }
             _other => Ok(Ty::Owned(t)),
@@ -431,7 +436,11 @@ impl<'a> ToTokens for FnArg<'a> {
                 and.to_tokens(tokens);
                 self_.to_tokens(tokens);
             }
-            FnArg::Arg { name, ref ty, mutbl } => {
+            FnArg::Arg {
+                name,
+                ref ty,
+                mutbl,
+            } => {
                 mutbl.to_tokens(tokens);
                 name.to_tokens(tokens);
                 Token!(:)([Span::call_site()]).to_tokens(tokens);
@@ -444,10 +453,10 @@ impl<'a> ToTokens for FnArg<'a> {
 impl<'a> ToTokens for Ty<'a> {
     fn to_tokens(&self, tokens: &mut Tokens) {
         match *self {
-            Ty::Unit => tokens.append(
-                TokenTree::Group(
-                    Group::new(Delimiter::Parenthesis, quote!{ () }.into()),
-                )),
+            Ty::Unit => tokens.append(TokenTree::Group(Group::new(
+                Delimiter::Parenthesis,
+                quote!{ () }.into(),
+            ))),
             Ty::Char(tok) => tok.to_tokens(tokens),
             Ty::Bool(tok) => tok.to_tokens(tokens),
             Ty::Integer(t) => t.to_tokens(tokens),
@@ -468,7 +477,7 @@ pub mod tests {
         creates_class_with_superclass();
     }
 
-    fn test_class_and_superclass (raw: &str, class_name: &str, superclass_name: &str) {
+    fn test_class_and_superclass(raw: &str, class_name: &str, superclass_name: &str) {
         let token_stream = raw.parse::<TokenStream>().unwrap();
         let buffer = TokenBuffer::new(token_stream);
         let cursor = buffer.begin();
