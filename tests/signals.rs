@@ -15,6 +15,7 @@ use std::cell::Cell;
 use std::ffi::CStr;
 use std::mem;
 use std::slice;
+use std::ffi::CString;
 
 use glib::object::*;
 use glib::translate::*;
@@ -42,6 +43,7 @@ gobject_gen! {
             let private = self.get_priv();
             private.val.set(v);
             self.emit_value_changed();
+            self.emit_value_changed_to(v);
         }
 
         pub fn get_value(&self) -> u32 {
@@ -113,6 +115,26 @@ fn connects_to_signal() {
 
     let _id: glib::SignalHandlerId = obj.connect_value_changed(|_| unsafe {
         EMITTED = true;
+    });
+
+    obj.set_value(42);
+
+    unsafe {
+        assert!(EMITTED);
+    }
+}
+
+#[test]
+fn connects_to_signal_with_arg() {
+    let obj = Signaler::new();
+
+    static mut EMITTED: bool = false;
+
+    let _id: glib::SignalHandlerId = obj.connect_value_changed_to(|_, v| {
+//        assert_eq!(v, 42);
+        unsafe {
+            EMITTED = true;
+        }
     });
 
     obj.set_value(42);

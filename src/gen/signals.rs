@@ -111,11 +111,12 @@ impl<'ast> ClassContext<'ast> {
             .map(|signal| {
                 let emit_name = emit_signalname(signal);
                 let signal_id_name = signal_id_name(&signal);
+                let rust_params = &signal.sig.inputs;
+                let rust_return_ty = &signal.sig.output;
 
                 quote_cs! {
-                    // FIXME: include signal arguments and return value in prototype
                     #[allow(unused)]
-                    fn #emit_name(&self) {
+                    fn #emit_name(#(#rust_params),*) -> #rust_return_ty {
                         // foo/imp.rs: increment()
                         let params: &[glib::Value] = &[
                             (self as &glib::ToValue).to_value(),
