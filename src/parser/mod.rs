@@ -182,7 +182,7 @@ impl Synom for ast::ImplItemMethod {
 /// example, if you need to parse a keyword "foo" as part of a bigger
 /// parser, you could do this:
 ///
-/// ```ignore
+/// ```norun
 /// call!(keyword("foo"))
 /// ```
 fn keyword<'a>(name: &'static str) -> impl Fn(Cursor<'a>) -> PResult<()> {

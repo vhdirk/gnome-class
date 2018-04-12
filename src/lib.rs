@@ -50,7 +50,7 @@ mod parser;
 ///
 /// The macro is invoked as follows:
 ///
-/// ```ignore
+/// ```norun
 /// #[macro_use]
 /// extern crate glib;  // see "Necessary imports" below on why this is needed
 /// use gobject_gen::gobject_gen;
@@ -81,6 +81,9 @@ mod parser;
 ///         virtual fn a_virtual_method(&self) {
 ///             // default handler implementation goes here
 ///         }
+///
+///         signal fn clicked(&self);
+///     }
 /// }
 /// ```
 ///
@@ -110,7 +113,7 @@ mod parser;
 ///
 /// ## Example: instance-private data with default values
 ///
-/// ```ignore
+/// ```norun
 /// #[derive(Default)]
 /// struct FooPrivate {
 ///     // ... your fields here
@@ -128,7 +131,7 @@ mod parser;
 ///
 /// ## Example: instance-private data with custom values
 ///
-/// ```ignore
+/// ```norun
 /// struct FooPrivate {
 ///     value: Cell<i32>;
 /// }
@@ -170,7 +173,7 @@ mod parser;
 ///
 /// You can put this at the top of your crate's main file:
 ///
-/// ```ignore
+/// ```norun
 /// #![feature(proc_macro)]
 /// extern crate gobject_gen;
 ///
