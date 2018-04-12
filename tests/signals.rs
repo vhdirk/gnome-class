@@ -131,7 +131,7 @@ fn connects_to_signal_with_arg() {
     static mut EMITTED: bool = false;
 
     let _id: glib::SignalHandlerId = obj.connect_value_changed_to(|_, v| {
-//        assert_eq!(v, 42);
+        assert_eq!(v, 42);
         unsafe {
             EMITTED = true;
         }

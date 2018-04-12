@@ -113,14 +113,14 @@ impl<'ast> ClassContext<'ast> {
                 let signal_id_name = signal_id_name(&signal);
                 let rust_params = &signal.sig.inputs;
                 let rust_return_ty = &signal.sig.output;
+                let signal_params = signal.sig.input_args_to_glib_values();
 
                 quote_cs! {
                     #[allow(unused)]
                     fn #emit_name(#(#rust_params),*) -> #rust_return_ty {
                         // foo/imp.rs: increment()
                         let params: &[glib::Value] = &[
-                            (self as &glib::ToValue).to_value(),
-                            // FIXME: signal arguments
+                            #signal_params
                         ];
 
                         unsafe {
@@ -128,7 +128,7 @@ impl<'ast> ClassContext<'ast> {
                                 mut_override(params.as_ptr()) as *mut gobject_sys::GValue,
                                 PRIV.#signal_id_name,
                                 0, // detail
-                                ptr::null_mut(), // ptr to return GValue
+                                ptr::null_mut(), // FIXME: ptr to return GValue
                             );
                         }
                     }

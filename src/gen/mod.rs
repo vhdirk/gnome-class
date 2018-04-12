@@ -190,6 +190,17 @@ impl<'ast> FnSig<'ast> {
         ArgNamesToGlib(&self.inputs[1..])
     }
 
+    /// Generates an argument list with values converted to Glib values
+    ///
+    /// For example, if the `FnSig` represents a `fn foo(&self, a:
+    /// bool, b: i32)`, then this function will generate tokens for
+    /// `<self as &glib::ToValue>.to_value(), <&a as &glib::ToValue>::to_value(), <&b as
+    /// &glib::ToValue>::to_value(),`.  The generated tokens are suitable for
+    /// generating a GValue argument list to be passed to `g_signal_emitv()`.
+    fn input_args_to_glib_values<'a>(&'a self) -> impl ToTokens + 'a {
+        ArgNamesToGlibValues(&self.inputs)
+    }
+
     /// Generates a list of argument names with no type conversions, without the `&self`
     ///
     /// For example, if the `FnSig` represents a `fn foo(&self, a:
@@ -375,6 +386,33 @@ impl<'ast> ToTokens for ArgNamesToGlib<'ast> {
                     Token!(,)([Span::call_site()]).to_tokens(tokens);
                 }
                 FnArg::SelfRef(..) => unreachable!(),
+            }
+        }
+    }
+}
+
+struct ArgNamesToGlibValues<'ast>(&'ast [FnArg<'ast>]);
+
+impl<'ast> ToTokens for ArgNamesToGlibValues<'ast> {
+    fn to_tokens(&self, tokens: &mut Tokens) {
+        for arg in self.0 {
+            match *arg {
+                FnArg::SelfRef(..) => {
+                    let code = quote_cs! {
+                        (self as &glib::ToValue).to_value(),
+                    };
+
+                    code.to_tokens(tokens);
+
+                },
+
+                FnArg::Arg { name, ..} => {
+                    let code = quote_cs! {
+                        (&#name as &glib::ToValue).to_value(),
+                    };
+
+                    code.to_tokens(tokens);
+                }
             }
         }
     }
