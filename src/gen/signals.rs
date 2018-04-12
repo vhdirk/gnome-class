@@ -114,6 +114,24 @@ impl<'ast> ClassContext<'ast> {
                 let rust_params = &signal.sig.inputs;
                 let rust_return_ty = &signal.sig.output;
                 let signal_params = signal.sig.input_args_to_glib_values();
+                let return_gtype = signal.sig.output.to_gtype_path();
+
+                let (initialize_return_value, convert_return_value_to_rust) = match rust_return_ty {
+                    Ty::Unit => (quote_cs!{}, quote_cs! { () }),
+
+                    _ => (
+                        quote_cs! {
+                            gobject_sys::g_value_init(ret.to_glib_none_mut().0, #return_gtype);
+                        },
+                        quote_cs! {
+                            if ret.type_() == Type::Invalid {
+                                unreachable!();
+                            } else {
+                                ret.get().unwrap()
+                            }
+                        },
+                    ),
+                };
 
                 quote_cs! {
                     #[allow(unused)]
@@ -124,12 +142,18 @@ impl<'ast> ClassContext<'ast> {
                         ];
 
                         unsafe {
+                            let mut ret = glib::Value::uninitialized();
+
+                            #initialize_return_value
+
                             gobject_sys::g_signal_emitv(
                                 mut_override(params.as_ptr()) as *mut gobject_sys::GValue,
                                 PRIV.#signal_id_name,
                                 0, // detail
-                                ptr::null_mut(), // FIXME: ptr to return GValue
+                                ret.to_glib_none_mut().0,
                             );
+
+                            #convert_return_value_to_rust
                         }
                     }
                 }
