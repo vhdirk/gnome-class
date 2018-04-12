@@ -75,7 +75,7 @@ impl<'ast> ClassContext<'ast> {
                 assert!(signal.sig.inputs.len() > 0);
                 let n_params = (signal.sig.inputs.len() - 1) as u32;
 
-                let param_types: Vec<Path> = signal.sig.inputs.iter()
+                let param_gtypes: Vec<Path> = signal.sig.inputs.iter()
                     .skip(1) // skip &self
                     .map(|arg| {
                         if let FnArg::Arg { ref ty, .. } = arg {
@@ -87,7 +87,7 @@ impl<'ast> ClassContext<'ast> {
                     .collect();
 
                 quote_cs! {
-                    let param_types = [#(#param_types),*];
+                    let param_gtypes = [#(#param_gtypes),*];
 
                     PRIV.#signal_id_name =
                         gobject_sys::g_signal_newv (#signal_name as *const u8 as *const i8,
@@ -99,7 +99,7 @@ impl<'ast> ClassContext<'ast> {
                                                     None,                              // c_marshaller,
                                                     gobject_sys::G_TYPE_NONE,          // return_type
                                                     #n_params,                         // n_params,
-                                                    mut_override(param_types.as_ptr()) // param_types
+                                                    mut_override(param_gtypes.as_ptr())
                         );
                 }
             })
