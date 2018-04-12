@@ -86,18 +86,24 @@ impl<'ast> ClassContext<'ast> {
                     })
                     .collect();
 
+                let return_gtype = signal.sig.output.to_gtype_path();
+
                 quote_cs! {
                     let param_gtypes = [#(#param_gtypes),*];
 
+                    // FIXME: we are using G_SIGNAL_RUN_LAST all the time so that signals
+                    // with return values will work.  We should do this automatically only
+                    // for signals with return values, or let the user specify the flags and
+                    // check that they match gobject's requirements.
                     PRIV.#signal_id_name =
                         gobject_sys::g_signal_newv (#signal_name as *const u8 as *const i8,
                                                     #get_type_fn_name(),
-                                                    gobject_sys::G_SIGNAL_RUN_FIRST,   // flags
+                                                    gobject_sys::G_SIGNAL_RUN_LAST,    // flags
                                                     ptr::null_mut(),                   // class_closure,
                                                     None,                              // accumulator
                                                     ptr::null_mut(),                   // accu_data
                                                     None,                              // c_marshaller,
-                                                    gobject_sys::G_TYPE_NONE,          // return_type
+                                                    #return_gtype,                     // return_type
                                                     #n_params,                         // n_params,
                                                     mut_override(param_gtypes.as_ptr())
                         );
@@ -124,7 +130,7 @@ impl<'ast> ClassContext<'ast> {
                             gobject_sys::g_value_init(ret.to_glib_none_mut().0, #return_gtype);
                         },
                         quote_cs! {
-                            if ret.type_() == Type::Invalid {
+                            if ret.type_() == glib::Type::Invalid {
                                 unreachable!();
                             } else {
                                 ret.get().unwrap()

@@ -15,7 +15,6 @@ use std::cell::Cell;
 use std::ffi::CStr;
 use std::mem;
 use std::slice;
-use std::ffi::CString;
 
 use glib::object::*;
 use glib::translate::*;
@@ -38,6 +37,7 @@ gobject_gen! {
     impl Signaler {
         signal fn value_changed(&self);
         signal fn value_changed_to(&self, v: u32);
+        signal fn gimme_an_int(&self) -> u32;
 
         pub fn set_value(&self, v: u32) {
             let private = self.get_priv();
@@ -49,6 +49,10 @@ gobject_gen! {
         pub fn get_value(&self) -> u32 {
             let private = self.get_priv();
             private.val.get()
+        }
+
+        pub fn call_emit_gimme_an_int(&self) -> u32 {
+            self.emit_gimme_an_int()
         }
     }
 }
@@ -76,7 +80,7 @@ fn has_signals() {
         let mut n_ids: libc::c_uint = 0;
 
         let raw_signal_ids = gobject_sys::g_signal_list_ids(obj_type, &mut n_ids);
-        assert_eq!(n_ids, 2);
+        assert_eq!(n_ids, 3);
 
         let n_ids = n_ids as usize;
 
@@ -92,6 +96,8 @@ fn has_signals() {
         assert_eq!(query.n_params, 0);
         assert!(query.param_types.is_null());
 
+        assert_eq!(query.return_type, gobject_sys::G_TYPE_NONE);
+
         // value-changed-to
 
         let mut query: gobject_sys::GSignalQuery = mem::zeroed();
@@ -104,6 +110,20 @@ fn has_signals() {
 
         let param_types = slice::from_raw_parts(query.param_types, query.n_params as usize);
         assert_eq!(param_types[0], gobject_sys::G_TYPE_UINT);
+
+        assert_eq!(query.return_type, gobject_sys::G_TYPE_NONE);
+
+        // gimme-an-int
+
+        let mut query: gobject_sys::GSignalQuery = mem::zeroed();
+        gobject_sys::g_signal_query(signal_ids[2], &mut query);
+
+        check_signal(&query, obj_type, signal_ids[2], "gimme-an-int");
+
+        assert_eq!(query.n_params, 0);
+        assert!(query.param_types.is_null());
+
+        assert_eq!(query.return_type, gobject_sys::G_TYPE_UINT);
     }
 }
 
@@ -142,4 +162,15 @@ fn connects_to_signal_with_arg() {
     unsafe {
         assert!(EMITTED);
     }
+}
+
+#[test]
+fn connects_to_signal_with_return_value() {
+    let obj = Signaler::new();
+
+    obj.connect_gimme_an_int(|_| 42);
+
+    let ret = obj.call_emit_gimme_an_int();
+
+    assert_eq!(ret, 42);
 }
