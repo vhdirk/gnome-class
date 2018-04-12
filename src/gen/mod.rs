@@ -403,10 +403,9 @@ impl<'ast> ToTokens for ArgNamesToGlibValues<'ast> {
                     };
 
                     code.to_tokens(tokens);
+                }
 
-                },
-
-                FnArg::Arg { name, ..} => {
+                FnArg::Arg { name, .. } => {
                     let code = quote_cs! {
                         (&#name as &glib::ToValue).to_value(),
                     };
