@@ -84,7 +84,7 @@ fn connects_to_signal() {
         EMITTED = true;
     });
 
-    // obj.set_value(42);
+    obj.set_value(42);
 
     unsafe {
         assert!(EMITTED);
