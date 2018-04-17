@@ -4,8 +4,8 @@
 use proc_macro::{Diagnostic, Level};
 use proc_macro2::{Delimiter, Group, Span, TokenTree};
 use quote::{ToTokens, Tokens};
-use syn::{Ident, Path};
 use syn::spanned::Spanned;
+use syn::{Ident, Path};
 
 use errors::*;
 use hir::*;
@@ -255,7 +255,7 @@ impl<'ast> ToTokens for ToGlibType<'ast> {
                 Diagnostic::spanned(
                     self.0.span().unstable(),
                     Level::Error,
-                    "unimplemented glib type for owned types"
+                    "unimplemented glib type for owned types",
                 ).emit();
                 (quote! {
                     ()
@@ -321,7 +321,7 @@ impl<'ast> ToTokens for FromGlib<'ast> {
                 Diagnostic::spanned(
                     self.0.span().unstable(),
                     Level::Error,
-                    "unimplemented glib type for owned types"
+                    "unimplemented glib type for owned types",
                 ).emit();
                 false
             }

@@ -171,7 +171,7 @@ macro_rules! error_not_ident {
             ).emit();
         }
         Ok(((), i))
-    }}
+    }};
 }
 
 named!{parse_ident -> syn::Ident,
