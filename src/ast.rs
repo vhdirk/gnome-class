@@ -3,7 +3,7 @@
 use proc_macro2::Term;
 use syn::punctuated::Punctuated;
 use syn::{Attribute, Lit};
-use syn::{Block, FnArg, Ident, Path, ReturnType, FieldsNamed};
+use syn::{Block, FnArg, Ident, Path, ReturnType, FieldsNamed, Type};
 
 pub struct Program {
     pub items: Vec<Item>,
@@ -64,6 +64,7 @@ pub struct ImplItem {
 
 pub enum ImplItemKind {
     Method(ImplItemMethod),
+    Prop(ImplProp),
     ReserveSlots(Lit),
 }
 
@@ -75,4 +76,44 @@ pub struct ImplItemMethod {
     pub inputs: Punctuated<FnArg, Token!(,)>, // must start with &self
     pub output: ReturnType,
     pub body: Option<Block>,
+}
+
+pub struct ImplProp {
+    pub name: Ident,
+    pub type_: Type,
+    pub items: Vec<ImplPropBlock>,
+}
+
+impl ImplProp {
+    pub fn getter(&self) -> Option<&ImplPropBlock> {
+        self.items.iter().find(|item| match *item {
+            ImplPropBlock::Getter(_) => true,
+            _ => false,
+        })
+    }
+
+    pub fn setter(&self) -> Option<&ImplPropBlock> {
+        self.items.iter().find(|item| match *item {
+            ImplPropBlock::Setter(_) => true,
+            _ => false,
+        })
+    }
+}
+
+pub enum ImplPropBlock {
+    Getter(Block),
+    Setter(ImplPropSetter),
+}
+
+pub struct ImplPropSetter {
+    pub param: Ident,
+    pub block: Block,
+}
+
+// Mostly copied from syn's ImplItemType
+pub struct InstancePrivateItem {
+    pub type_token: Token!(type),
+    pub eq_token: Token!(=),
+    pub path: Path,
+    pub semi_token: Token!(;),
 }

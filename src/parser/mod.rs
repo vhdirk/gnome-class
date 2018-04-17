@@ -107,6 +107,8 @@ impl Synom for ast::ImplItemKind {
     named!(parse -> Self, alt!(
         syn!(ast::ImplItemMethod) => { |x| ast::ImplItemKind::Method(x) }
         |
+        syn!(ast::ImplProp) => { |x| ast::ImplItemKind::Prop(x) }
+        |
         do_parse!(
             call!(keyword("reserve_slots")) >>
             slots: parens!(syn!(syn::Lit)) >>
@@ -179,6 +181,65 @@ impl Synom for ast::ImplItemMethod {
 
     fn description() -> Option<&'static str> {
         Some("method or signal")
+    }
+}
+
+impl Synom for ast::ImplProp {
+    named!(parse -> Self, do_parse!(
+        call!(keyword("property")) >>
+
+        name: syn!(syn::Ident) >>
+
+        punct!(:) >>
+        call!(keyword("T")) >>
+        call!(keyword("where")) >>
+        call!(keyword("T")) >>
+        punct!(:) >>
+
+        type_: syn!(syn::Type) >>
+        items_and_braces: braces!(many0!(alt!(
+            do_parse!(
+                call!(keyword("get")) >>
+                parens!(do_parse!(
+                    punct!(&) >>
+                    call!(keyword("self")) >>
+                    ()
+                )) >>
+                punct!(->) >>
+                call!(keyword("T")) >>
+                getter: syn!(syn::Block) >>
+                (ast::ImplPropBlock::Getter(getter))
+            )
+            |
+            do_parse!(
+                call!(keyword("set")) >>
+                param: parens!(do_parse!(
+                    punct!(&) >>
+                    call!(keyword("self")) >>
+                    punct!(,) >>
+                    param: syn!(syn::Ident) >>
+                    punct!(:) >>
+                    call!(keyword("T")) >>
+                    (param)
+                )) >>
+                block: syn!(syn::Block) >>
+                (ast::ImplPropBlock::Setter(
+                    ast::ImplPropSetter{
+                        param: param.1,
+                        block: block
+                    }
+                ))
+            )
+        ))) >>
+        (ast::ImplProp {
+            name: name,
+            type_: type_,
+            items: items_and_braces.1,
+        })
+    ));
+
+    fn description() -> Option<&'static str> {
+        Some("property definition")
     }
 }
 

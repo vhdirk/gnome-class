@@ -209,6 +209,9 @@ impl<'ast> Classes<'ast> {
                         ast::ImplItemKind::ReserveSlots(_) => {
                             bail!("can't reserve slots in a parent class impl");
                         }
+                        ast::ImplItemKind::Prop(_) => {
+                            bail!("can't define props in a parent class impl");
+                        }
                     };
                     if item.signal.is_some() {
                         bail!("can't implement signals for parent classes")
@@ -242,6 +245,10 @@ impl<'ast> Classes<'ast> {
             }
             None => {
                 for item in impl_.items.iter() {
+                    if let ast::ImplItemKind::Prop(_) = item.node {
+                        continue;
+                    }
+
                     let slot = class.translate_slot(item)?;
                     class.slots.push(slot);
                 }
@@ -264,6 +271,7 @@ impl<'ast> Class<'ast> {
             ast::ImplItemKind::ReserveSlots(ref _slots) => {
                 panic!("reserve slots not implemented");
             }
+            ast::ImplItemKind::Prop(_) => unreachable!(),
         }
     }
 
