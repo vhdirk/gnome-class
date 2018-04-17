@@ -1,5 +1,6 @@
 use proc_macro::TokenStream;
 
+use proc_macro2::Term;
 use syn::buffer::Cursor;
 use syn::punctuated::Punctuated;
 use syn::synom::{PResult, Synom};
@@ -185,11 +186,11 @@ impl Synom for ast::ImplItemMethod {
 /// ```norun
 /// call!(keyword("foo"))
 /// ```
-fn keyword<'a>(name: &'static str) -> impl Fn(Cursor<'a>) -> PResult<()> {
+fn keyword<'a>(name: &'static str) -> impl Fn(Cursor<'a>) -> PResult<Term> {
     move |input: Cursor<'a>| {
-        if let Some((s, rest)) = input.term() {
-            if s.as_str() == name {
-                return Ok(((), rest));
+        if let Some((term, rest)) = input.term() {
+            if term.as_str() == name {
+                return Ok((term, rest));
             }
         }
         parse_error() // FIXME: use a meaningful error message when synom allows for it
