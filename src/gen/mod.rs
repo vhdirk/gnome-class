@@ -1,9 +1,11 @@
 // We give `ClassName` variables an identifier that uses upper-case.
 #![allow(non_snake_case)]
 
+use proc_macro::{Diagnostic, Level};
 use proc_macro2::{Delimiter, Group, Span, TokenTree};
 use quote::{ToTokens, Tokens};
 use syn::{Ident, Path};
+use syn::spanned::Spanned;
 
 use errors::*;
 use hir::*;
@@ -249,7 +251,16 @@ impl<'ast> ToTokens for ToGlibType<'ast> {
                 }).to_tokens(tokens);
             }
             Ty::Integer(i) => i.to_tokens(tokens),
-            Ty::Owned(_) => panic!("unimplemented glib type for owned types"),
+            Ty::Owned(_) => {
+                Diagnostic::spanned(
+                    self.0.span().unstable(),
+                    Level::Error,
+                    "unimplemented glib type for owned types"
+                ).emit();
+                (quote! {
+                    ()
+                }).to_tokens(tokens);
+            }
         }
     }
 }
@@ -273,7 +284,16 @@ impl<'ast, T: ToTokens> ToTokens for ToGlib<'ast, T> {
                     <#t as ToGlibPtr<_>>::to_glib_none(#expr).0
                 }).to_tokens(tokens);
             }
-            Ty::Owned(_) => panic!("unimplemented to glib type for owned types"),
+            Ty::Owned(_) => {
+                Diagnostic::spanned(
+                    self.0.span().unstable(),
+                    Level::Error,
+                    "unimplemented glib type for owned types",
+                ).emit();
+                (quote! {
+                    ()
+                }).to_tokens(tokens);
+            }
         }
     }
 }
@@ -297,7 +317,14 @@ impl<'ast> ToTokens for FromGlib<'ast> {
                 true
             }
             Ty::Integer(_) => false, // no conversion necessary
-            Ty::Owned(_) => panic!("unimplemented from glib on owned types"),
+            Ty::Owned(_) => {
+                Diagnostic::spanned(
+                    self.0.span().unstable(),
+                    Level::Error,
+                    "unimplemented glib type for owned types"
+                ).emit();
+                false
+            }
         };
 
         if needs_conversion {
