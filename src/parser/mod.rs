@@ -4,7 +4,7 @@ use proc_macro2::Term;
 use syn::buffer::Cursor;
 use syn::punctuated::Punctuated;
 use syn::synom::{PResult, Synom};
-use syn::{self, parse_error, Ident, Path};
+use syn::{self, parse_error_with_span, Ident, Path};
 
 use ast;
 use errors::*;
@@ -225,8 +225,10 @@ fn keyword<'a>(name: &'static str) -> impl Fn(Cursor<'a>) -> PResult<Term> {
             if term.as_str() == name {
                 return Ok((term, rest));
             }
+            println!("here: {}", term.as_str());
         }
-        parse_error() // FIXME: use a meaningful error message when synom allows for it
+        parse_error_with_span(&format!("expected `{}`", name),
+                              input.span())
     }
 }
 

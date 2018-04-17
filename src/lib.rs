@@ -23,6 +23,7 @@ extern crate gobject_sys;
 use errors::*;
 use proc_macro::TokenStream;
 use std::error::Error;
+use syn::synom::ParseError;
 
 macro_rules! quote_cs {
     ($($tt:tt)*) => (quote_spanned!(::proc_macro2::Span::call_site()=>
@@ -184,10 +185,14 @@ mod parser;
 ///
 #[proc_macro]
 pub fn gobject_gen(input: TokenStream) -> TokenStream {
-    let ast_program = if let Ok(ast_program) = parser::parse_program(input) {
-        ast_program
-    } else {
-        return quote!{}.into();
+    let ast_program = match parser::parse_program(input) {
+        Ok(ast_program) => ast_program,
+        Err(Error(ErrorKind::Parse(ParseError(Some((ref str, ref span)))), _)) => {
+            return quote_spanned! { *span =>
+                                     compile_error!(#str);
+            }.into();
+        },
+        Err(_) => { return quote!{compile_error!("damnit");}.into(); }
     };
 
     let result: Result<quote::Tokens> = (|| {
