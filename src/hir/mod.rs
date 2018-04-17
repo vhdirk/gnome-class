@@ -215,13 +215,13 @@ impl<'ast> Classes<'ast> {
                             bail!("can't reserve slots in a parent class impl");
                         }
                     };
-                    if item.signal {
+                    if item.signal.is_some() {
                         bail!("can't implement signals for parent classes")
                     }
-                    if !item.virtual_ {
+                    if !item.virtual_.is_some() {
                         bail!("can only implement virtual functions for parent classes")
                     }
-                    if item.public {
+                    if item.public.is_some() {
                         bail!("overrides are always public, no `pub` needed")
                     }
                     let method = match class.translate_method(item)? {
@@ -273,15 +273,15 @@ impl<'ast> Class<'ast> {
     }
 
     fn translate_method(&mut self, method: &'ast ast::ImplItemMethod) -> Result<Slot<'ast>> {
-        if method.signal {
-            if method.public {
+        if method.signal.is_some() {
+            if method.public.is_some() {
                 bail!(
                     "function `{}` is a signal so it doesn't need to be public",
                     method.name
                 )
             }
 
-            if method.virtual_ {
+            if method.virtual_.is_some() {
                 bail!(
                     "function `{}` is a signal so it doesn't need to be virtual",
                     method.name
@@ -294,8 +294,8 @@ impl<'ast> Class<'ast> {
                 sig,
                 body: method.body.as_ref(),
             }))
-        } else if method.virtual_ {
-            if method.public {
+        } else if method.virtual_.is_some() {
+            if method.public.is_some() {
                 bail!(
                     "function `{}` is virtual so it doesn't need to be public",
                     method.name
@@ -310,7 +310,7 @@ impl<'ast> Class<'ast> {
             let sig = self.extract_sig(method)?;
             Ok(Slot::Method(Method {
                 sig,
-                public: method.public,
+                public: method.public.is_some(),
                 body: method
                     .body
                     .as_ref()

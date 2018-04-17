@@ -151,9 +151,9 @@ impl Synom for ast::ImplItemKind {
 
 impl Synom for ast::ImplItemMethod {
     named!(parse -> Self, do_parse!(
-        public: map!(option!(call!(keyword("pub"))), |x| x.is_some()) >>
-        virtual_: map!(option!(call!(keyword("virtual"))), |x| x.is_some()) >>
-        signal: map!(option!(call!(keyword("signal"))), |x| x.is_some()) >>
+        public: option!(call!(keyword("pub"))) >>
+        virtual_: option!(call!(keyword("virtual"))) >>
+        signal: option!(call!(keyword("signal"))) >>
         keyword!(fn) >>
         name: syn!(syn::Ident) >>
         params: parens!(Punctuated::parse_terminated) >>

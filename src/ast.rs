@@ -1,5 +1,6 @@
 // use lalrpop_intern::InternedString;
 // use quote::Tokens;
+use proc_macro2::Term;
 use syn::punctuated::Punctuated;
 use syn::{Attribute, Lit};
 use syn::{Block, FnArg, Ident, Path, ReturnType};
@@ -71,9 +72,9 @@ pub enum ImplItemKind {
 }
 
 pub struct ImplItemMethod {
-    pub public: bool,   // requires body
-    pub virtual_: bool, // implies public, doesn't need body
-    pub signal: bool,   // ignore
+    pub public: Option<Term>,   // requires body
+    pub virtual_: Option<Term>, // implies public, doesn't need body
+    pub signal: Option<Term>,   // ignore
     pub name: Ident,
     pub inputs: Punctuated<FnArg, Token!(,)>, // must start with &self
     pub output: ReturnType,
