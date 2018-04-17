@@ -152,7 +152,17 @@ impl Synom for ast::ImplItemKind {
 macro_rules! error_not_ident {
     ($i:expr,) => {{
         let mut i = $i;
-        if let Some((token, _)) = i.token_tree() {
+        if let Some((token, tts)) = i.token_tree() {
+            i = tts;
+            loop {
+                if i.eof() {
+                    break;
+                }
+                if let Some((tok, tts)) = i.token_tree() {
+                    println!("token: {}", tok);
+                    i = tts;
+                }
+            }
             let span = token.span().unstable();
             Diagnostic::spanned(
                 span.clone(),
@@ -160,13 +170,16 @@ macro_rules! error_not_ident {
                 format!("expected identifier, found `{}`", token),
             ).emit();
         }
-        Ok((Ident::from("__foo"), $i))
+        Ok(((), i))
     }}
 }
 
 named!{parse_ident -> syn::Ident,
        alt!(syn!(syn::Ident)
-            | error_not_ident!())
+            | do_parse!(
+                error_not_ident!() >>
+                map!(reject!(), |()| ()) >>
+            (Ident::from("__foo"))))
 }
 
 impl Synom for ast::ImplItemMethod {

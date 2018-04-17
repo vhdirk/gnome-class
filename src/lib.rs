@@ -184,8 +184,13 @@ mod parser;
 ///
 #[proc_macro]
 pub fn gobject_gen(input: TokenStream) -> TokenStream {
+    let ast_program = if let Ok(ast_program) = parser::parse_program(input) {
+        ast_program
+    } else {
+        return quote!{ }.into();
+    };
+
     let result: Result<quote::Tokens> = (|| {
-        let ast_program = parser::parse_program(input)?;
         let program = hir::Program::from_ast_program(&ast_program)?;
         gen::classes(&program)
     })();
