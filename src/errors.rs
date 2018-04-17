@@ -16,10 +16,6 @@ error_chain! {
     }
 
     errors {
-        LexError(offset: usize, msg: &'static str) {
-            description("invalid token in the input")
-            display("invalid token at offset {}: {}", offset, msg)
-        }
         InstancePrivateError(msg: String) {
             description("zero or one InstancePrivate types expected")
             display("at most one InstancePrivate type definitions expected: {}", msg)
