@@ -308,90 +308,65 @@ impl<'ast> ClassContext<'ast> {
     }
 
     pub fn register_instance_private(&self) -> Tokens {
-        match self.instance_private {
-            Some(name) => {
-                let PrivateName = name;
+        let PrivateStructName = self.PrivateStructName;
 
-                quote_cs! {
-                    // This is an Option<_> so that we can replace its value with None on finalize() to
-                    // release all memory it holds
-                    gobject_ffi::g_type_class_add_private(klass, mem::size_of::<Option<#PrivateName>>());
-                }
-            }
-
-            None => {
-                quote_cs!{}
-            }
+        quote_cs! {
+            // This is an Option<_> so that we can replace its value with None on finalize() to
+            // release all memory it holds
+            gobject_ffi::g_type_class_add_private(klass, mem::size_of::<Option<#PrivateStructName>>());
         }
     }
 
     pub fn get_priv_fn(&self) -> Tokens {
-        match self.instance_private {
-            Some(name) => {
-                let PrivateName = name;
-                let InstanceNameFfi = self.InstanceNameFfi;
-                let get_type_fn_name = self.instance_get_type_fn_name();
+        let PrivateStructName = self.PrivateStructName;
+        let InstanceNameFfi = self.InstanceNameFfi;
+        let get_type_fn_name = self.instance_get_type_fn_name();
 
-                quote_cs! {
-                    fn get_priv(&self) -> &#PrivateName {
-                        unsafe {
-                            let private = gobject_ffi::g_type_instance_get_private(
-                                <Self as ToGlibPtr<*mut #InstanceNameFfi>>::to_glib_none(self).0 as *mut gobject_ffi::GTypeInstance,
-                                #get_type_fn_name(),
-                            ) as *const Option<#PrivateName>;
+        quote_cs! {
+            #[allow(dead_code)]
+            fn get_priv(&self) -> &#PrivateStructName {
+                unsafe {
+                    let _private = gobject_ffi::g_type_instance_get_private(
+                        <Self as ToGlibPtr<*mut #InstanceNameFfi>>::to_glib_none(self).0 as *mut gobject_ffi::GTypeInstance,
+                        #get_type_fn_name(),
+                    ) as *const Option<#PrivateStructName>;
 
-                            (&*private).as_ref().unwrap()
-                        }
-                    }
+                    (&*_private).as_ref().unwrap()
                 }
             }
-
-            None => quote_cs!{},
         }
     }
 
     pub fn init_priv_with_default(&self) -> Tokens {
-        match self.instance_private {
-            Some(name) => {
-                let PrivateName = name;
-                let get_type_fn_name = self.instance_get_type_fn_name();
+        let PrivateStructName = self.PrivateStructName;
+        let get_type_fn_name = self.instance_get_type_fn_name();
 
-                quote_cs! {
-                    let private = gobject_ffi::g_type_instance_get_private(
-                        obj,
-                        #get_type_fn_name()
-                    ) as *mut Option<#PrivateName>;
+        quote_cs! {
+            let _private = gobject_ffi::g_type_instance_get_private(
+                obj,
+                #get_type_fn_name()
+            ) as *mut Option<#PrivateStructName>;
 
-                    // Here we initialize the private data.  GObject gives it to us all zero-initialized
-                    // but we don't really want to have any Drop impls run here so just overwrite the
-                    // data.
-                    ptr::write(private, Some(<#PrivateName as Default>::default()));
-                }
-            }
-
-            None => quote_cs!{},
+            // Here we initialize the private data.  GObject gives it to us all zero-initialized
+            // but we don't really want to have any Drop impls run here so just overwrite the
+            // data.
+            ptr::write(_private, Some(<#PrivateStructName as Default>::default()));
         }
     }
 
     pub fn free_instance_private(&self) -> Tokens {
-        match self.instance_private {
-            Some(name) => {
-                let PrivateName = name;
-                let get_type_fn_name = self.instance_get_type_fn_name();
+        let PrivateStructName = self.PrivateStructName;
+        let get_type_fn_name = self.instance_get_type_fn_name();
 
-                quote_cs! {
-                    let private = gobject_ffi::g_type_instance_get_private(
-                        obj as *mut gobject_ffi::GTypeInstance,
-                        #get_type_fn_name(),
-                    ) as *mut Option<#PrivateName>;
+        quote_cs! {
+            let _private = gobject_ffi::g_type_instance_get_private(
+                obj as *mut gobject_ffi::GTypeInstance,
+                #get_type_fn_name(),
+            ) as *mut Option<#PrivateStructName>;
 
-                    // Drop contents of private data by replacing its
-                    // Option container with None
-                    let _ = (*private).take();
-                }
-            }
-
-            None => quote_cs!{},
+            // Drop contents of private data by replacing its
+            // Option container with None
+            let _ = (*_private).take();
         }
     }
 }

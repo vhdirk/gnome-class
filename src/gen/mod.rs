@@ -10,6 +10,8 @@ use syn::{Ident, Path};
 use errors::*;
 use hir::*;
 
+use ast;
+
 mod boilerplate;
 mod cstringident;
 mod imp;
@@ -33,7 +35,7 @@ pub fn classes(program: &Program) -> Result<Tokens> {
 struct ClassContext<'ast> {
     program: &'ast Program<'ast>,
     class: &'ast Class<'ast>,
-    instance_private: Option<&'ast Path>,
+    PrivateStructName: Ident,
     ModuleName: Ident,
     InstanceName: &'ast Ident,
     InstanceNameFfi: Ident,
@@ -55,8 +57,6 @@ impl<'ast> ClassContext<'ast> {
         // commonly-used symbol names for the class in question, for
         // example, "FooClass" out of "Foo".
 
-        let instance_private = class.instance_private;
-
         let InstanceName = &class.name;
 
         // If our instance name is "Foo" and we have a suffix "Bar", generates a
@@ -77,6 +77,7 @@ impl<'ast> ClassContext<'ast> {
         };
 
         let InstanceNameFfi = container_name("Ffi");
+        let PrivateStructName = container_name("Priv");
         let ModuleName = container_name("Mod"); // toplevel "InstanceMod" module name
         let ClassName = container_name("Class");
         let PrivateClassName = container_name("ClassPrivate");
@@ -93,7 +94,7 @@ impl<'ast> ClassContext<'ast> {
         ClassContext {
             program,
             class,
-            instance_private,
+            PrivateStructName,
             ModuleName,
             InstanceName,
             ClassName,
@@ -457,5 +458,13 @@ impl<'ast> ToTokens for ArgNames<'ast> {
                 FnArg::SelfRef(..) => unreachable!(),
             }
         }
+    }
+}
+
+impl ToTokens for ast::Field {
+    fn to_tokens(&self, tokens: &mut Tokens) {
+        let name = &self.name;
+        let ty = &self.ty;
+        (quote_cs! { #name: #ty }).to_tokens(tokens);
     }
 }

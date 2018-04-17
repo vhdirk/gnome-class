@@ -71,7 +71,7 @@ impl Synom for ast::Class {
 
 impl Synom for ast::ClassItem {
     named!(parse -> Self, alt!(
-        syn!(ast::InstancePrivateItem) => { |x| ast::ClassItem::InstancePrivate(x) }
+        syn!(ast::Field) => { |x| ast::ClassItem::PrivateField(x) }
     ));
 
     fn description() -> Option<&'static str> {
@@ -79,24 +79,19 @@ impl Synom for ast::ClassItem {
     }
 }
 
-impl Synom for ast::InstancePrivateItem {
+impl Synom for ast::Field {
     named!(parse -> Self, do_parse!(
-        type_: keyword!(type)             >>
-        call!(keyword("InstancePrivate")) >>
-        eq: punct!(=)                     >>
-        path: syn!(Path)                  >>
-        semi: punct!(;)                   >>
-        (ast::InstancePrivateItem {
-            type_token: type_,
-            eq_token:   eq,
-            path:       path,
-            semi_token: semi
+        name: syn!(Ident) >>
+        colon: punct!(:)  >>
+        ty: syn!(syn::Type) >>
+        semi: punct!(;) >>
+        (ast::Field {
+          name: name,
+          colon: colon,
+          ty: ty,
+          semi: semi
         })
     ));
-
-    fn description() -> Option<&'static str> {
-        Some("InstancePrivate type")
-    }
 }
 
 impl Synom for ast::Impl {
@@ -239,11 +234,10 @@ pub mod tests {
     pub fn run() {
         parses_class_with_no_superclass();
         parses_class_with_superclass();
-        parses_instance_private_item();
         parses_class_item();
-        parses_program();
         parses_plain_impl_item();
         parses_impl_item_with_trait();
+        parses_class_with_private_field();
     }
 
     fn assert_tokens_equal<T: ToTokens>(x: &T, s: &str) {
@@ -260,23 +254,23 @@ pub mod tests {
         assert!(class.extends.is_none());
     }
 
+    fn parses_class_with_private_field() {
+        let raw = "class Foo {
+          foo : u32;
+          bar : u32;
+          baz : u32;
+        }";
+        let class = parse_str::<ast::Class>(raw).unwrap();
+
+        assert_eq!(class.items.len(), 3);
+    }
+
     fn parses_class_with_superclass() {
         let raw = "class Foo: Bar {}";
         let class = parse_str::<ast::Class>(raw).unwrap();
 
         assert_eq!(class.name.as_ref(), "Foo");
         assert_tokens_equal(&class.extends, "Bar");
-    }
-
-    fn parses_instance_private_item() {
-        let raw = "type InstancePrivate = FooPrivate;";
-        let item = parse_str::<ast::ClassItem>(raw).unwrap();
-
-        match item {
-            ast::ClassItem::InstancePrivate(item) => {
-                assert_tokens_equal(&item.path, "FooPrivate");
-            }
-        }
     }
 
     fn parses_class_item() {
@@ -289,17 +283,6 @@ pub mod tests {
         } else {
             unreachable!();
         }
-    }
-
-    fn parses_program() {
-        let raw = "class Foo {
-                       type InstancePrivate = FooPrivate;
-                   \
-                   }";
-        let program = parse_str::<ast::Program>(raw).unwrap();
-
-        assert!(program.items.len() == 1);
-        assert!(ast::get_program_classes(&program).len() == 1);
     }
 
     fn test_parsing_impl_item(raw: &str, trait_name: Option<&str>, self_name: &str) {

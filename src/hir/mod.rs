@@ -37,9 +37,10 @@ pub struct Class<'ast> {
     pub parent_class_ffi: Tokens, // ffi::ParentClass
     pub implements: Vec<Path>,    // names of GTypeInterfaces
 
-    pub instance_private: Option<&'ast Path>,
     // pub class_private: Option<&'ast ast::PrivateStruct>
-    //
+
+    pub private_fields: Vec<&'ast ast::Field>,
+
     // The order of these is important; it's the order of the slots in FooClass
     pub slots: Vec<Slot<'ast>>,
     // pub n_reserved_slots: usize,
@@ -184,13 +185,12 @@ impl<'ast> Classes<'ast> {
                 parent_ffi: tokens_ParentInstanceFfi(ast_class),
                 parent_class_ffi: tokens_ParentClassFfi(ast_class),
                 implements: Vec::new(),
-                instance_private: ast_class
+                private_fields: ast_class
                     .items
                     .iter()
                     .filter_map(|i| match *i {
-                        ast::ClassItem::InstancePrivate(ref ip) => Some(&ip.path),
-                    })
-                    .next(),
+                        ast::ClassItem::PrivateField(ref field) => Some(field)
+                    }).collect(),
                 slots: Vec::new(),
                 overrides: HashMap::new(),
             },

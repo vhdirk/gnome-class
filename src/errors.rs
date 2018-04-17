@@ -14,11 +14,4 @@ error_chain! {
         Io(::std::io::Error) #[cfg(unix)];
         Parse(ParseError);
     }
-
-    errors {
-        InstancePrivateError(msg: String) {
-            description("zero or one InstancePrivate types expected")
-            display("at most one InstancePrivate type definitions expected: {}", msg)
-        }
-    }
 }

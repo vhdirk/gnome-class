@@ -1,23 +1,7 @@
 ```rust
-struct FooPrivate {
-    ...
-}
-
-// or #[derive(Default)] above if it works for you
-impl Default for FooPrivate {
-    fn default() -> FooPrivate {
-        ...
-    }
-}
-
-struct FooClassPrivate {
-    ...
-}
-
 gnome_class! {
     class Foo: Superclass {
-        type InstancePrivate = FooPrivate; // similar to associated types, "type Foo = Bar;"
-        type ClassPrivate = FooClassPrivate;
+        field: Cell<u32>; // this is where we declare the members of the private struct
     }
 
     // this defines the class ABI, basically

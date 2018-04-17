@@ -3,7 +3,7 @@
 use proc_macro2::Term;
 use syn::punctuated::Punctuated;
 use syn::{Attribute, Lit};
-use syn::{Block, FnArg, Ident, Path, ReturnType};
+use syn::{Block, FnArg, Ident, Path, ReturnType, Type};
 
 pub struct Program {
     pub items: Vec<Item>,
@@ -58,7 +58,7 @@ pub struct Impl {
 }
 
 pub enum ClassItem {
-    InstancePrivate(InstancePrivateItem),
+    PrivateField(Field)
 }
 
 pub struct ImplItem {
@@ -81,10 +81,9 @@ pub struct ImplItemMethod {
     pub body: Option<Block>,
 }
 
-// Mostly copied from syn's ImplItemType
-pub struct InstancePrivateItem {
-    pub type_token: Token!(type),
-    pub eq_token: Token!(=),
-    pub path: Path,
-    pub semi_token: Token!(;),
+pub struct Field {
+    pub name: Ident,
+    pub colon: Token!(:),
+    pub ty: Type,
+    pub semi: Token!(;),
 }

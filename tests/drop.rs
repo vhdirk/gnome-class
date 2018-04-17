@@ -11,7 +11,7 @@ use std::cell::RefCell;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct DropCounter {
     counter: Arc<AtomicUsize>,
 }
@@ -34,21 +34,9 @@ impl Drop for DropCounter {
     }
 }
 
-struct DummyPrivate {
-    dc: RefCell<DropCounter>,
-}
-
-impl Default for DummyPrivate {
-    fn default() -> Self {
-        DummyPrivate {
-            dc: RefCell::new(DropCounter::new()),
-        }
-    }
-}
-
 gobject_gen! {
     class Dummy {
-        type InstancePrivate = DummyPrivate;
+        dc: RefCell<DropCounter>;
     }
 
     impl Dummy {

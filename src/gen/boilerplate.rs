@@ -22,6 +22,7 @@ impl<'ast> ClassContext<'ast> {
         let ParentInstance = self.ParentInstance;
         let ParentInstanceFfi = self.ParentInstanceFfi;
         let PrivateClassName = &self.PrivateClassName;
+        let PrivateStructName = self.PrivateStructName;
 
         let callback_guard = glib_callback_guard();
         let register_instance_private = self.register_instance_private();
@@ -30,6 +31,7 @@ impl<'ast> ClassContext<'ast> {
         let free_instance_private = self.free_instance_private();
         let get_type_fn_name = self.instance_get_type_fn_name();
         let imp_new_fn_name = self.imp_new_fn_name();
+        let private_fields = &self.class.private_fields;
 
         let slots = self.slots();
 
@@ -154,6 +156,10 @@ impl<'ast> ClassContext<'ast> {
                         // signal ids
                         #(#signal_id_names: 0,)*
                     };
+                    #[derive(Default)]
+                    struct #PrivateStructName {
+                        #(#private_fields,)*
+                    }
 
                     // We are inside the "mod imp".  We will create function
                     // implementations for the default handlers for methods and

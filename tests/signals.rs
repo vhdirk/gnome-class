@@ -19,19 +19,9 @@ use std::slice;
 use glib::object::*;
 use glib::translate::*;
 
-struct SignalerPrivate {
-    val: Cell<u32>,
-}
-
-impl Default for SignalerPrivate {
-    fn default() -> Self {
-        SignalerPrivate { val: Cell::new(0) }
-    }
-}
-
 gobject_gen! {
     class Signaler {
-        type InstancePrivate = SignalerPrivate;
+        val: Cell<u32>;
     }
 
     impl Signaler {

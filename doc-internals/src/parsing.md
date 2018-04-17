@@ -12,21 +12,15 @@ The AST is defined in `src/ast.rs`.  The AST is intended to match the
 user's code pretty much verbatim.  For example, consider a call like this:
 
 ```rust
-struct CounterPrivate {
-    f: Cell<u32>,
-}
-
 gobject_gen! {
     class Counter {
-        type InstancePrivate = CounterPrivate;
+        f: Cell<u32>;
     }
 
     impl Counter {
         pub fn add(&self, x: u32) -> u32 {
-            let private = self.get_priv();
-            let v = private.f.get() + x;
-            private.f.set(v);
-            v
+            self.get_priv().f.set(self.get() + x);
+            self.get()
         }
 
         pub fn get(&self) -> u32 {
@@ -36,9 +30,8 @@ gobject_gen! {
 }
 ```
 
-First, this has a `CounterPrivate` structure defined *outside* the
-macro, so the macro doesn't really know about it.  It's just an
-artifact of the user's code.
+First, `f: Cell<u32>` is a member of the private structure from a GObject
+point of view, hence the call to `self.get_priv()` to access it.
 
 Then, there is the actual invocation of the `gobject_gen!` macro.  It
 has two *items*, a `class` and an `impl`.  Even though Rust does not
@@ -58,12 +51,12 @@ Program {
                 name: Ident("Counter"),
                 extends: None,
                 items: [
-                    ClassItem::InstancePrivate(
-                        InstancePrivateItem {
-                            type_token: Token!(type),
-                            eq_token:   Token!(=),
-                            path:       Path(CounterPrivate),
-                            semi_token: Token!(;),
+                    ClassItem::PrivateField(
+                        PrivateField {
+                            type: Ident("f"),
+                            sep:  Token!(:),
+                            path: Type,
+                            semi: Token!(;),
                         }
                     ),
                 ],
@@ -116,7 +109,7 @@ In summary:  the macro call that looks like
 ```
 gobject_gen! {
     class Counter {
-        ... InstancePrivate definition ...
+        ... PrivateField definitions ...
     }
 
     impl Counter {
@@ -134,8 +127,8 @@ Program {
             Class {
                 name: Ident("Counter"),
                 items: [ 
-                    ... one InstancePrivateItem referencing
-                        the "CounterPrivate" path ...
+                    ... one PrivateField declaring
+                        an f member of type Cell<u32> ...
                 ]
             }
         ),
