@@ -1,4 +1,4 @@
-use proc_macro::TokenStream;
+use proc_macro::{Diagnostic, Level, Span, TokenStream};
 
 use proc_macro2::Term;
 use syn::buffer::Cursor;
@@ -149,13 +149,33 @@ impl Synom for ast::ImplItemKind {
     }
 }
 
+macro_rules! error_not_ident {
+    ($i:expr,) => {{
+        let mut i = $i;
+        if let Some((token, _)) = i.token_tree() {
+            let span = token.span().unstable();
+            Diagnostic::spanned(
+                span.clone(),
+                Level::Error,
+                format!("expected identifier, found `{}`", token),
+            ).emit();
+        }
+        Ok((Ident::from("__foo"), $i))
+    }}
+}
+
+named!{parse_ident -> syn::Ident,
+       alt!(syn!(syn::Ident)
+            | error_not_ident!())
+}
+
 impl Synom for ast::ImplItemMethod {
     named!(parse -> Self, do_parse!(
         public: option!(call!(keyword("pub"))) >>
         virtual_: option!(call!(keyword("virtual"))) >>
         signal: option!(call!(keyword("signal"))) >>
         keyword!(fn) >>
-        name: syn!(syn::Ident) >>
+        name: call!(parse_ident) >>
         params: parens!(Punctuated::parse_terminated) >>
         output: syn!(syn::ReturnType) >>
         body: alt!(
