@@ -1,4 +1,3 @@
-#![feature(catch_expr)]
 #![feature(proc_macro)]
 #![recursion_limit = "512"]
 // While under active devel, these warnings are kind of annoying.
@@ -185,11 +184,11 @@ mod parser;
 ///
 #[proc_macro]
 pub fn gobject_gen(input: TokenStream) -> TokenStream {
-    let result: Result<quote::Tokens> = do catch {
+    let result: Result<quote::Tokens> = (|| {
         let ast_program = parser::parse_program(input)?;
         let program = hir::Program::from_ast_program(&ast_program)?;
         gen::classes(&program)
-    };
+    })();
 
     match result {
         Ok(tokens) => {
