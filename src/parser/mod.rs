@@ -1,4 +1,4 @@
-use proc_macro::{Diagnostic, Level, Span, TokenStream};
+use proc_macro::{Diagnostic, Level, TokenStream};
 
 use proc_macro2::Term;
 use syn::buffer::Cursor;
