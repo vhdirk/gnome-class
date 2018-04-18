@@ -72,6 +72,7 @@ impl Synom for ast::Class {
 impl Synom for ast::Impl {
     named!(parse -> Self, do_parse!(
         keyword!(impl) >>
+        interface: option!(call!(keyword("interface"))) >>
         trait_: option!(do_parse!(
             path: syn!(Ident) >>
             keyword!(for) >>
@@ -80,6 +81,7 @@ impl Synom for ast::Impl {
         self_path: syn!(Ident) >>
         body: braces!(many0!(syn!(ast::ImplItem))) >>
         (ast::Impl {
+            is_interface: interface.is_some(),
             trait_: trait_,
             self_path: self_path,
             items: body.1
@@ -274,6 +276,7 @@ pub mod tests {
         parses_plain_impl_item();
         parses_impl_item_with_trait();
         parses_class_with_private_field();
+        parses_impl_interface();
     }
 
     fn assert_tokens_equal<T: ToTokens>(x: &T, s: &str) {
@@ -322,10 +325,17 @@ pub mod tests {
         }
     }
 
-    fn test_parsing_impl_item(raw: &str, trait_name: Option<&str>, self_name: &str) {
+    fn test_parsing_impl_item(
+        raw: &str,
+        trait_name: Option<&str>,
+        self_name: &str,
+        is_interface: bool,
+    ) {
         let item = parse_str::<ast::Item>(raw).unwrap();
 
         if let ast::Item::Impl(ref impl_) = item {
+            assert_eq!(impl_.is_interface, is_interface);
+
             if let Some(trait_path) = impl_.trait_ {
                 assert_tokens_equal(&trait_path, trait_name.as_ref().unwrap());
             } else {
@@ -339,10 +349,14 @@ pub mod tests {
     }
 
     fn parses_plain_impl_item() {
-        test_parsing_impl_item("impl Foo {}", None, "Foo");
+        test_parsing_impl_item("impl Foo {}", None, "Foo", false);
     }
 
     fn parses_impl_item_with_trait() {
-        test_parsing_impl_item("impl Foo for Bar {}", Some("Foo"), "Bar");
+        test_parsing_impl_item("impl Foo for Bar {}", Some("Foo"), "Bar", false);
+    }
+
+    fn parses_impl_interface() {
+        test_parsing_impl_item("impl interface Foo for Bar {}", Some("Foo"), "Bar", true);
     }
 }
