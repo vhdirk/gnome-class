@@ -121,6 +121,8 @@ impl<'ast> ClassContext<'ast> {
         return ret;
     }
 
+    // If you rename this function, or move stuff out of it, please
+    // update doc-internals/src/types.md
     pub fn instance_slot_trampolines(&self) -> Vec<Tokens> {
         let callback_guard = glib_callback_guard();
         let InstanceName = self.InstanceName;
@@ -181,6 +183,8 @@ impl<'ast> ClassContext<'ast> {
         return ret;
     }
 
+    // If you rename this function, or move stuff out of it, please
+    // update doc-internals/src/types.md
     pub fn imp_extern_methods(&self) -> Vec<Tokens> {
         let InstanceName = self.InstanceName;
         let InstanceNameFfi = self.InstanceNameFfi;
