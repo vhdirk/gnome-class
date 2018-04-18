@@ -8,23 +8,10 @@ use gobject_gen::gobject_gen;
 
 use std::cell::Cell;
 
-struct PropPrivate {
-    p: Cell<u32>,
-    p2: Cell<u32>,
-}
-
-impl Default for PropPrivate {
-    fn default() -> Self {
-        PropPrivate {
-            p: Cell::new(0),
-            p2: Cell::new(0),
-        }
-    }
-}
-
 gobject_gen! {
     class ClassWithProps {
-        type InstancePrivate = PropPrivate;
+        p: Cell<u32>,
+        p2: Cell<u32>,
     }
 
     impl ClassWithProps {
