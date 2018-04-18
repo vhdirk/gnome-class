@@ -52,6 +52,7 @@ pub struct Class {
 
 // similar to syn::ItemImpl
 pub struct Impl {
+    pub is_interface: bool,
     pub trait_: Option<Ident>,
     pub self_path: Ident,
     pub items: Vec<ImplItem>,
