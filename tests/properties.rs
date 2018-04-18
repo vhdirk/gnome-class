@@ -1,4 +1,3 @@
-#![deny(warnings)]
 #![feature(proc_macro)]
 
 extern crate gobject_gen;
@@ -34,7 +33,7 @@ gobject_gen! {
             self.get_priv().p2.get()
         }
 
-        property myprop: T where T: u32 {
+        property MyProp: T where T: u32 {
             get(&self) -> T {
                 let private = self.get_priv();
                 return private.p.get();
@@ -46,7 +45,7 @@ gobject_gen! {
             }
         }
 
-        property prop2: T where T: u32 {
+        property Prop2: T where T: u32 {
             get(&self) -> T {
                 let private = self.get_priv();
                 return private.p2.get();

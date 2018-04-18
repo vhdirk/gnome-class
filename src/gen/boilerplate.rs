@@ -52,6 +52,9 @@ impl<'ast> ClassContext<'ast> {
         let slot_trait_impls = self.slot_trait_impls();
         let signal_trampolines = self.signal_trampolines();
 
+        let properties_enum = self.properties_enum();
+        //let properties_setters = &self.properties_setter();
+
         let parent_instance_tokens = if self.class.gobject_parent {
             quote_cs!{}
         } else {
@@ -132,12 +135,8 @@ impl<'ast> ClassContext<'ast> {
                         #(#slots)*
                     }
 
-                    // #[repr(u32)]
-                    // enum Properties {
-                    //     FIXMEDummy = 1,
-                    //     // first one starts at 1
-                    //     // FIXME - do not emit this enum at all if there are no properties
-                    // }
+                    // properties enum
+                    #properties_enum
 
                     struct #PrivateClassName {
                         parent_class: *const #ParentClassFfi,
@@ -200,7 +199,35 @@ impl<'ast> ClassContext<'ast> {
                             (*(PRIV.parent_class as *mut gobject_ffi::GObjectClass)).finalize.map(|f| f(obj));
                         }
 
-                        // FIXME: set_property() handler
+                        //unsafe extern "C" fn set_property(obj: *mut gobject_ffi::GObject,
+                        //                                  property_id: u32,
+                        //                                  value: gobject_ffi::GValue,
+                        //                                  pspec: gobject_ffi::GParamSpec) {
+
+                        //  ViewerFile *self = VIEWER_FILE (object);
+
+                        //  switch (property_id)
+                        //    {
+
+                        //    #(#properties_setters)*
+
+                        //    case PROP_FILENAME:
+                        //      g_free (self->priv->filename);
+                        //      self->priv->filename = g_value_dup_string (value);
+                        //      g_print ("filename: %s\n", self->priv->filename);
+                        //      break;
+
+                        //    case PROP_ZOOM_LEVEL:
+                        //      self->priv->zoom_level = g_value_get_uint (value);
+                        //      g_print ("zoom level: %u\n", self->priv->zoom_level);
+                        //      break;
+
+                        //    default:
+                        //      /* We don't have any other property... */
+                        //      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
+                        //      break;
+                        //    }
+                        //}
 
                         // FIXME: get_property() handler
 

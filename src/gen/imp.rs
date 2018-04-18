@@ -369,4 +369,28 @@ impl<'ast> ClassContext<'ast> {
             let _ = (*_private).take();
         }
     }
+
+    pub fn properties_enum(&self) -> Tokens {
+        if self.class.properties.len() == 0 {
+            return quote_cs!{};
+        }
+
+        let properties: Vec<Tokens> = self.class
+            .properties
+            .iter()
+            .enumerate()
+            .map(|(i, prop)| {
+                let name = prop.name;
+                let index = (i as u32) + 1;
+                quote_cs! { #name = #index }
+            })
+            .collect();
+
+        quote_cs! {
+            #[repr(u32)]
+            enum Properties {
+                #(#properties, )*
+            }
+        }
+    }
 }
