@@ -206,8 +206,8 @@ impl<'ast> Classes<'ast> {
             Some(class) => class,
             None => bail!("impl for class that doesn't exist: {}", impl_.self_path),
         };
-        match impl_.trait_ {
-            Some(parent_class) => {
+        match *impl_ {
+            ast::Impl { is_interface: false, trait_: Some(parent_class), .. } => {
                 for item in impl_.items.iter() {
                     let item = match item.node {
                         ast::ImplItemKind::Method(ref m) => m,
@@ -245,12 +245,19 @@ impl<'ast> Classes<'ast> {
                         .push(method);
                 }
             }
-            None => {
+
+            ast::Impl { is_interface: false, trait_: None, .. } => {
                 for item in impl_.items.iter() {
                     let slot = class.translate_slot(item)?;
                     class.slots.push(slot);
                 }
             }
+
+            ast::Impl { is_interface: true, trait_: Some(parent_class), .. } => {
+                unimplemented!()
+            }
+
+            _ => unreachable!()
         }
 
         Ok(())
