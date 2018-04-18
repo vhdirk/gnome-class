@@ -11,11 +11,15 @@ use std::cell::Cell;
 
 struct PropPrivate {
     p: Cell<u32>,
+    p2: Cell<u32>,
 }
 
 impl Default for PropPrivate {
     fn default() -> Self {
-        PropPrivate { p: Cell::new(0) }
+        PropPrivate {
+            p: Cell::new(0),
+            p2: Cell::new(0),
+        }
     }
 }
 
@@ -26,7 +30,8 @@ gobject_gen! {
 
     impl ClassWithProps {
         pub fn get(&self) -> u32 {
-            self.get_priv().p.get()
+            self.get_priv().p.get() +
+            self.get_priv().p2.get()
         }
 
         property myprop: T where T: u32 {
@@ -38,6 +43,19 @@ gobject_gen! {
             set(&self, value: T) {
                 let mut private = self.get_priv();
                 private.p.set(value);
+            }
+        }
+
+        #[construct]
+        property prop2: T where T: u32 {
+            get(&self) -> T {
+                let private = self.get_priv();
+                return private.p2.get();
+            }
+
+            set(&self, value: T) {
+                let mut private = self.get_priv();
+                private.p2.set(value);
             }
         }
     }
