@@ -14,7 +14,7 @@ use quote::{ToTokens, Tokens};
 use syn::buffer::TokenBuffer;
 use syn::punctuated::Punctuated;
 use syn::synom::Synom;
-use syn::{self, parse_str, Block, Ident, Path, ReturnType, Field};
+use syn::{self, parse_str, Block, Ident, Path, ReturnType, Field, Type};
 
 use super::ast;
 use super::checking::*;
@@ -44,8 +44,8 @@ pub struct Class<'ast> {
     // The order of these is important; it's the order of the slots in FooClass
     pub slots: Vec<Slot<'ast>>,
     // pub n_reserved_slots: usize,
-    //
-    // pub properties: Vec<Property>,
+
+    pub properties: Vec<Property<'ast>>,
     pub overrides: HashMap<Ident, Vec<Method<'ast>>>,
 }
 
@@ -53,6 +53,18 @@ pub enum Slot<'ast> {
     Method(Method<'ast>),
     VirtualMethod(VirtualMethod<'ast>),
     Signal(Signal<'ast>),
+}
+
+pub struct Property<'ast> {
+    pub name: Ident,
+    pub type_: &'ast Type,
+    pub getter: &'ast Block,
+    pub setter: PropertySetterBlock<'ast>,
+}
+
+pub struct PropertySetterBlock<'ast> {
+    pub param: Ident,
+    pub body: &'ast Block,
 }
 
 pub struct Method<'ast> {
@@ -187,6 +199,7 @@ impl<'ast> Classes<'ast> {
                 implements: Vec::new(),
                 private_fields: ast_class.fields.named.iter().collect(),
                 slots: Vec::new(),
+                properties: Vec::new(),
                 overrides: HashMap::new(),
             },
         );
@@ -245,12 +258,16 @@ impl<'ast> Classes<'ast> {
             }
             None => {
                 for item in impl_.items.iter() {
-                    if let ast::ImplItemKind::Prop(_) = item.node {
-                        continue;
+                    match item.node {
+                        ast::ImplItemKind::Prop(_) => {
+                            let property = class.translate_property(item)?;
+                            class.properties.push(property);
+                        },
+                        _ => {
+                            let slot = class.translate_slot(item)?;
+                            class.slots.push(slot);
+                        }
                     }
-
-                    let slot = class.translate_slot(item)?;
-                    class.slots.push(slot);
                 }
             }
         }
@@ -457,6 +474,35 @@ impl<'ast> Class<'ast> {
             }
             _other => Ok(Ty::Owned(t)),
         }
+    }
+
+    fn translate_property(&mut self, item: &'ast ast::ImplItem) -> Result<Property<'ast>> {
+        assert_eq!(item.attrs.len(), 0); // attributes unimplemented
+        if let ast::ImplItemKind::Prop(ref prop) = item.node {
+            let name = prop.name;
+            let type_ = &prop.type_;
+
+            let getter = match prop.getter() {
+                Some(&ast::ImplPropBlock::Getter(ref b)) => b,
+                None => bail!("property without getter: {}", name),
+                _ => bail!("invalid property getter: {}", name),
+            };
+
+            let setter = match prop.setter() {
+                Some(ast::ImplPropBlock::Setter(ref b)) => {
+                    PropertySetterBlock {
+                        param: b.param,
+                        body: &b.block,
+                    }
+                },
+                None => bail!("property without setter: {}", name),
+                _ => bail!("invalid property setter: {}", name),
+            };
+
+            return Ok(Property { name, type_, getter, setter });
+        }
+
+        bail!("Invalid definition inside property");
     }
 }
 

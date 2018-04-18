@@ -46,7 +46,6 @@ gobject_gen! {
             }
         }
 
-        #[construct]
         property prop2: T where T: u32 {
             get(&self) -> T {
                 let private = self.get_priv();
