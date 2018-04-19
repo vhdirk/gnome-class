@@ -72,7 +72,7 @@ pub struct Interface {
 }
 
 pub enum ClassItem {
-    PrivateField(Field)
+    PrivateField(Field),
 }
 
 pub struct ImplItem {

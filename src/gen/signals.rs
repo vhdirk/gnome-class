@@ -1,4 +1,4 @@
-use quote::{Tokens};
+use quote::Tokens;
 use syn::{Ident, Path};
 
 use glib_utils::*;

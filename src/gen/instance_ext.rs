@@ -1,5 +1,5 @@
-use quote::{Tokens};
-use syn::{Ident};
+use quote::Tokens;
+use syn::Ident;
 
 use hir::{Method, Slot, VirtualMethod};
 

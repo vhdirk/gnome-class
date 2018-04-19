@@ -279,7 +279,8 @@ pub mod tests {
           foo : u32;
           bar : u32;
           baz : u32;
-        }";
+        \
+                   }";
         let class = parse_str::<ast::Class>(raw).unwrap();
 
         assert_eq!(class.items.len(), 3);
