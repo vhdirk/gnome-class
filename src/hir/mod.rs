@@ -253,7 +253,7 @@ impl<'ast> Classes<'ast> {
                 }
             }
 
-            ast::Impl { is_interface: true, trait_: Some(parent_class), .. } => {
+            ast::Impl { is_interface: true, trait_: Some(_parent_class), .. } => {
                 unimplemented!()
             }
 
