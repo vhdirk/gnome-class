@@ -125,6 +125,8 @@ gnome_class! {
         }
     }
     
-    // FIXME: we need syntax to define new GTypeInterfaces
+    interface Blah: RequiredClass + RequiredIface + RequiredIface {
+        virtual fn blah(&self, ...);
+    }
 }
 ```
