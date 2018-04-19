@@ -6,9 +6,7 @@ use quote::{ToTokens, Tokens};
 use syn::{Ident, Path};
 
 use errors::*;
-use hir::*;
-
-use ast;
+use hir::{Class, FnArg, FnSig, Method, Program, Signal, Slot, Ty, VirtualMethod};
 
 mod boilerplate;
 mod cstringident;
