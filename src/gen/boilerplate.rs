@@ -1,7 +1,9 @@
 use quote::Tokens;
 
-use self::cstringident::*;
-use super::*;
+use glib_utils::*;
+
+use super::cstringident::CStringIdent;
+use super::class::ClassContext;
 
 // This has all the one-time boilerplate for a GObject implementation:
 // the instance and class structs, the get_type(), instance_init(),

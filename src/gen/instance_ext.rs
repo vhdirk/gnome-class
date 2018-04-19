@@ -1,5 +1,10 @@
+use quote::{Tokens};
+use syn::{Ident};
+
+use hir::{Method, Slot, VirtualMethod};
+
+use super::class::ClassContext;
 use super::signals;
-use super::*;
 
 impl<'ast> ClassContext<'ast> {
     /// Returns, for each method, something like
