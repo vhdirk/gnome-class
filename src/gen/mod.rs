@@ -15,7 +15,7 @@ use self::class::ClassContext;
 use errors::*;
 use hir::Program;
 
-pub fn classes(program: &Program) -> Result<Tokens> {
+pub fn codegen(program: &Program) -> Result<Tokens> {
     let class_tokens = program
         .classes
         .iter()

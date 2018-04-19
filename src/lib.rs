@@ -156,7 +156,7 @@ pub fn gobject_gen(input: TokenStream) -> TokenStream {
 
     let result: Result<quote::Tokens> = (|| {
         let program = hir::Program::from_ast_program(&ast_program)?;
-        gen::classes(&program)
+        gen::codegen(&program)
     })();
 
     match result {
