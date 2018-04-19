@@ -23,11 +23,17 @@ use super::glib_utils::*;
 
 pub struct Program<'ast> {
     pub classes: Classes<'ast>,
+    pub interfaces: Interfaces<'ast>,
 }
 
 pub struct Classes<'ast> {
     items: HashMap<Ident, Class<'ast>>,
 }
+
+pub struct Interfaces<'ast> {
+    items: HashMap<Ident, Interface<'ast>>,
+}
+
 #[cfg_attr(rustfmt, rustfmt_skip)]
 pub struct Class<'ast> {
     pub name: Ident, // Foo
@@ -47,6 +53,14 @@ pub struct Class<'ast> {
 
     pub properties: Vec<Property<'ast>>,
     pub overrides: HashMap<Ident, Vec<Method<'ast>>>,
+}
+
+pub struct Interface<'ast> {
+    pub name: Ident, // Foo
+
+    // The order of these is important; it's the order of the slots in FooIface
+    pub slots: Vec<Slot<'ast>>,
+    // pub n_reserved_slots: usize,
 }
 
 pub enum Slot<'ast> {
@@ -168,7 +182,15 @@ impl<'ast> Program<'ast> {
             classes.add_impl(impl_)?;
         }
 
-        Ok(Program { classes })
+        let mut interfaces = Interfaces::new();
+        for iface in ast.interfaces() {
+            interfaces.add(iface)?;
+        }
+
+        Ok(Program {
+            classes,
+            interfaces,
+        })
     }
 }
 
@@ -215,7 +237,11 @@ impl<'ast> Classes<'ast> {
             None => bail!("impl for class that doesn't exist: {}", impl_.self_path),
         };
         match *impl_ {
-            ast::Impl { is_interface: false, trait_: Some(parent_class), .. } => {
+            ast::Impl {
+                is_interface: false,
+                trait_: Some(parent_class),
+                ..
+            } => {
                 for item in impl_.items.iter() {
                     let item = match item.node {
                         ast::ImplItemKind::Method(ref m) => m,
@@ -257,7 +283,11 @@ impl<'ast> Classes<'ast> {
                 }
             }
 
-            ast::Impl { is_interface: false, trait_: None, .. } => {
+            ast::Impl {
+                is_interface: false,
+                trait_: None,
+                ..
+            } => {
                 for item in impl_.items.iter() {
                     match item.node {
                         ast::ImplItemKind::Prop(_) => {
@@ -272,11 +302,13 @@ impl<'ast> Classes<'ast> {
                 }
             }
 
-            ast::Impl { is_interface: true, trait_: Some(_parent_class), .. } => {
-                unimplemented!()
-            }
+            ast::Impl {
+                is_interface: true,
+                trait_: Some(_parent_class),
+                ..
+            } => unimplemented!(),
 
-            _ => unreachable!()
+            _ => unreachable!(),
         }
 
         Ok(())
@@ -513,6 +545,36 @@ impl<'ast> Class<'ast> {
         }
 
         bail!("Invalid definition inside property");
+    }
+}
+
+impl<'ast> Interfaces<'ast> {
+    fn new() -> Interfaces<'ast> {
+        Interfaces {
+            items: HashMap::new(),
+        }
+    }
+
+    pub fn len(&self) -> usize {
+        self.items.len()
+    }
+
+    pub fn get(&self, name: &str) -> &Interface {
+        self.items.iter().find(|c| c.1.name == name).unwrap().1
+    }
+
+    fn add(&mut self, ast_iface: &'ast ast::Interface) -> Result<()> {
+        let prev = self.items.insert(
+            ast_iface.name,
+            Interface {
+                name: ast_iface.name,
+                slots: Vec::new(),
+            },
+        );
+        if prev.is_some() {
+            bail!("redefinition of interface `{}`", ast_iface.name);
+        }
+        Ok(())
     }
 }
 
