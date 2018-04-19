@@ -1,5 +1,11 @@
-use self::cstringident::CStringIdent;
-use super::*;
+use quote::{Tokens};
+use syn::{Ident, Path};
+
+use glib_utils::*;
+use hir::{FnArg, Signal, Slot, Ty};
+
+use super::class::ClassContext;
+use super::cstringident::CStringIdent;
 
 impl<'ast> ClassContext<'ast> {
     pub fn signal_trampolines(&self) -> Vec<Tokens> {

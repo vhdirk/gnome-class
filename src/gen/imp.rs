@@ -1,6 +1,10 @@
-use syn::Block;
+use quote::{Tokens};
+use syn::{Block, Ident};
 
-use super::*;
+use glib_utils::*;
+use hir::{FnSig, Method, Signal, Slot, VirtualMethod};
+
+use super::class::ClassContext;
 
 impl<'ast> ClassContext<'ast> {
     pub fn slots(&self) -> Vec<Tokens> {
