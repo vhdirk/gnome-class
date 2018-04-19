@@ -23,6 +23,13 @@ impl Program {
             _ => None,
         })
     }
+
+    pub fn interfaces<'a>(&'a self) -> impl Iterator<Item = &'a Interface> + 'a {
+        self.items.iter().filter_map(|item| match *item {
+            Item::Interface(ref i) => Some(i),
+            _ => None,
+        })
+    }
 }
 
 pub enum Item {
