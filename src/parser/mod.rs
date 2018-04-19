@@ -69,6 +69,22 @@ impl Synom for ast::Class {
     }
 }
 
+impl Synom for ast::Interface {
+    named!(parse -> Self, do_parse!(
+        call!(keyword("interface")) >>
+        name: syn!(Ident) >>
+        items_and_braces: braces!(many0!(syn!(ast::ImplItem)))  >>
+        (ast::Interface {
+            name: name,
+            items: items_and_braces.1,
+        })
+    ));
+
+    fn description() -> Option<&'static str> {
+        Some("interface item")
+    }
+}
+
 impl Synom for ast::ClassItem {
     named!(parse -> Self, alt!(
         syn!(ast::Field) => { |x| ast::ClassItem::PrivateField(x) }
@@ -241,6 +257,7 @@ pub mod tests {
         parses_impl_item_with_trait();
         parses_class_with_private_field();
         parses_impl_interface();
+        parses_interface();
     }
 
     fn assert_tokens_equal<T: ToTokens>(x: &T, s: &str) {
@@ -321,5 +338,12 @@ pub mod tests {
 
     fn parses_impl_interface() {
         test_parsing_impl_item("impl interface Foo for Bar {}", Some("Foo"), "Bar", true);
+    }
+
+    fn parses_interface() {
+        let raw = "interface Foo { virtual fn bar(&self); }";
+        let iface = parse_str::<ast::Interface>(raw).unwrap();
+
+        assert_eq!(iface.name.as_ref(), "Foo");
     }
 }

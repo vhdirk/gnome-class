@@ -28,6 +28,7 @@ impl Program {
 pub enum Item {
     Class(Class),
     Impl(Impl),
+    Interface(Interface),
 }
 
 pub fn get_program_classes<'a>(program: &'a Program) -> Vec<&'a Class> {
@@ -55,6 +56,12 @@ pub struct Impl {
     pub is_interface: bool,
     pub trait_: Option<Ident>,
     pub self_path: Ident,
+    pub items: Vec<ImplItem>,
+}
+
+pub struct Interface {
+    pub name: Ident,
+    // FIXME: required class and interfaces
     pub items: Vec<ImplItem>,
 }
 
