@@ -10,8 +10,6 @@ use syn::{Ident, Path};
 use errors::*;
 use hir::*;
 
-use ast;
-
 mod boilerplate;
 mod cstringident;
 mod imp;
@@ -458,13 +456,5 @@ impl<'ast> ToTokens for ArgNames<'ast> {
                 FnArg::SelfRef(..) => unreachable!(),
             }
         }
-    }
-}
-
-impl ToTokens for ast::Field {
-    fn to_tokens(&self, tokens: &mut Tokens) {
-        let name = &self.name;
-        let ty = &self.ty;
-        (quote_cs! { #name: #ty }).to_tokens(tokens);
     }
 }

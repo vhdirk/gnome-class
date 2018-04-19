@@ -56,7 +56,7 @@ mod parser;
 ///
 /// gobject_gen! {
 ///     class Foo {
-///         private_field: Cell<u32>;
+///         private_field: Cell<u32>,
 ///     }
 ///
 ///     // Methods and signals;, their order defines the ABI of your class
@@ -102,9 +102,10 @@ mod parser;
 /// #[derive(Default)]
 /// gobject_gen! {
 ///     class Foo {
-///         field_one: Cell<u32>;
-///         field_two: Cell<u16>;
+///         field_one: Cell<u32>,
+///         field_two: Cell<u16>,
 ///         ...
+///         last_field: Cell<u8>
 ///     }
 /// }
 /// ```

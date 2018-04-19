@@ -14,7 +14,7 @@ use quote::{ToTokens, Tokens};
 use syn::buffer::TokenBuffer;
 use syn::punctuated::Punctuated;
 use syn::synom::Synom;
-use syn::{self, parse_str, Block, Ident, Path, ReturnType};
+use syn::{self, parse_str, Block, Ident, Path, ReturnType, Field};
 
 use super::ast;
 use super::checking::*;
@@ -39,7 +39,7 @@ pub struct Class<'ast> {
 
     // pub class_private: Option<&'ast ast::PrivateStruct>
 
-    pub private_fields: Vec<&'ast ast::Field>,
+    pub private_fields: Vec<&'ast Field>,
 
     // The order of these is important; it's the order of the slots in FooClass
     pub slots: Vec<Slot<'ast>>,
@@ -185,12 +185,7 @@ impl<'ast> Classes<'ast> {
                 parent_ffi: tokens_ParentInstanceFfi(ast_class),
                 parent_class_ffi: tokens_ParentClassFfi(ast_class),
                 implements: Vec::new(),
-                private_fields: ast_class
-                    .items
-                    .iter()
-                    .filter_map(|i| match *i {
-                        ast::ClassItem::PrivateField(ref field) => Some(field)
-                    }).collect(),
+                private_fields: ast_class.fields.named.iter().collect(),
                 slots: Vec::new(),
                 overrides: HashMap::new(),
             },

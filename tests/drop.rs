@@ -36,7 +36,7 @@ impl Drop for DropCounter {
 
 gobject_gen! {
     class Dummy {
-        dc: RefCell<DropCounter>;
+        dc: RefCell<DropCounter>,
     }
 
     impl Dummy {

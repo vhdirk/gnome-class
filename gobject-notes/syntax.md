@@ -1,7 +1,8 @@
 ```rust
 gnome_class! {
     class Foo: Superclass {
-        field: Cell<u32>; // this is where we declare the members of the private struct
+        field1: Cell<u32>, // this is where we declare the members of the private struct
+        field2: Cell<u8>   // separated by commas
     }
 
     // this defines the class ABI, basically

@@ -11,7 +11,7 @@ use std::cell::Cell;
 
 gobject_gen! {
     class Counter {
-      f: Cell<u32>;
+      f: Cell<u32>,
     }
 
     impl Counter {

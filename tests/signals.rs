@@ -21,7 +21,7 @@ use glib::translate::*;
 
 gobject_gen! {
     class Signaler {
-        val: Cell<u32>;
+        val: Cell<u32>,
     }
 
     impl Signaler {

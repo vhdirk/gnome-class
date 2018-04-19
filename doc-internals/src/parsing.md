@@ -14,7 +14,7 @@ user's code pretty much verbatim.  For example, consider a call like this:
 ```rust
 gobject_gen! {
     class Counter {
-        f: Cell<u32>;
+        f: Cell<u32>
     }
 
     impl Counter {
@@ -50,16 +50,10 @@ Program {
             Class {
                 name: Ident("Counter"),
                 extends: None,
-                items: [
-                    ClassItem::PrivateField(
-                        PrivateField {
-                            type: Ident("f"),
-                            sep:  Token!(:),
-                            path: Type,
-                            semi: Token!(;),
-                        }
-                    ),
-                ],
+                fields: FieldsNamed {
+                  brace_token: Brace,
+                  named: Punctuated {...}
+                }
             }
         ),
 

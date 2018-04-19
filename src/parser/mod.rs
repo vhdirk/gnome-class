@@ -4,7 +4,7 @@ use proc_macro2::Term;
 use syn::buffer::Cursor;
 use syn::punctuated::Punctuated;
 use syn::synom::{PResult, Synom};
-use syn::{self, parse_error, Ident, Path};
+use syn::{self, parse_error, Ident, Path, FieldsNamed};
 
 use ast;
 use errors::*;
@@ -56,42 +56,17 @@ impl Synom for ast::Class {
             superclass: syn!(Path)                               >>
             // FIXME: interfaces
             (superclass)))                                       >>
-        items_and_braces: braces!(many0!(syn!(ast::ClassItem)))  >>
+        fields: syn!(FieldsNamed)                                >>
         (ast::Class {
             name:    name,
             extends: extends,
-            items:   items_and_braces.1
+            fields:   fields
         })
     ));
 
     fn description() -> Option<&'static str> {
         Some("class item")
     }
-}
-
-impl Synom for ast::ClassItem {
-    named!(parse -> Self, alt!(
-        syn!(ast::Field) => { |x| ast::ClassItem::PrivateField(x) }
-    ));
-
-    fn description() -> Option<&'static str> {
-        Some("item inside class")
-    }
-}
-
-impl Synom for ast::Field {
-    named!(parse -> Self, do_parse!(
-        name: syn!(Ident) >>
-        colon: punct!(:)  >>
-        ty: syn!(syn::Type) >>
-        semi: punct!(;) >>
-        (ast::Field {
-          name: name,
-          colon: colon,
-          ty: ty,
-          semi: semi
-        })
-    ));
 }
 
 impl Synom for ast::Impl {
@@ -256,13 +231,13 @@ pub mod tests {
 
     fn parses_class_with_private_field() {
         let raw = "class Foo {
-          foo : u32;
-          bar : u32;
-          baz : u32;
+          foo : u32,
+          bar : u32,
+          baz : u32
         }";
         let class = parse_str::<ast::Class>(raw).unwrap();
 
-        assert_eq!(class.items.len(), 3);
+        assert_eq!(class.fields.named.len(), 3);
     }
 
     fn parses_class_with_superclass() {
