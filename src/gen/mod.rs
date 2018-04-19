@@ -128,11 +128,3 @@ impl<'ast> ClassContext<'ast> {
         self.exported_fn_name("get_type")
     }
 }
-
-impl ToTokens for ast::Field {
-    fn to_tokens(&self, tokens: &mut Tokens) {
-        let name = &self.name;
-        let ty = &self.ty;
-        (quote_cs! { #name: #ty }).to_tokens(tokens);
-    }
-}

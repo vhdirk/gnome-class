@@ -1,6 +1,5 @@
-// use lalrpop_intern::InternedString;
-// use quote::Tokens;
 use proc_macro2::Term;
+use quote::{ToTokens, Tokens};
 use syn::punctuated::Punctuated;
 use syn::{Attribute, Lit};
 use syn::{Block, FnArg, Ident, Path, ReturnType, Type};
@@ -101,4 +100,12 @@ pub struct Field {
     pub colon: Token!(:),
     pub ty: Type,
     pub semi: Token!(;),
+}
+
+impl ToTokens for Field {
+    fn to_tokens(&self, tokens: &mut Tokens) {
+        let name = &self.name;
+        let ty = &self.ty;
+        (quote_cs! { #name: #ty }).to_tokens(tokens);
+    }
 }
