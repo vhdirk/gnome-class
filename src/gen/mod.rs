@@ -1,7 +1,9 @@
 // We give `ClassName` variables an identifier that uses upper-case.
 #![allow(non_snake_case)]
 
+use proc_macro2::Span;
 use quote::Tokens;
+use syn::Ident;
 
 mod boilerplate;
 mod class;
@@ -41,3 +43,14 @@ pub fn codegen(program: &Program) -> Tokens {
         #(#interface_tokens)*
     }
 }
+
+trait WithSuffix: AsRef<str> {
+    fn with_suffix(&self, suffix: &str) -> Ident {
+        Ident::new(
+            &format!("{}{}", self.as_ref(), suffix),
+            Span::call_site(),
+        )
+    }
+}
+
+impl WithSuffix for Ident {}

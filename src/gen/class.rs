@@ -6,6 +6,8 @@ use quote::{ToTokens, Tokens};
 use syn::Ident;
 
 use glib_utils::*;
+
+use gen::WithSuffix;
 use hir::{Class, Program};
 
 pub struct ClassContext<'ast> {
@@ -33,32 +35,22 @@ impl<'ast> ClassContext<'ast> {
         // commonly-used symbol names for the class in question, for
         // example, "FooClass" out of "Foo".
 
-        // If our instance name is "Foo" and we have a suffix "Bar", generates a
-        // "FooBar" Ident.  These are used for the generated module name,
-        // instance/class struct names, etc.
-        let container_name = |suffix: &str| {
-            Ident::new(
-                &format!("{}{}", class.name.as_ref(), suffix),
-                Span::call_site(),
-            )
-        };
-
         ClassContext {
             program,
             class,
-            PrivateStructName: container_name("Priv"),
-            ModuleName: container_name("Mod"), // toplevel "InstanceMod" module name
+            PrivateStructName: class.name.with_suffix("Priv"),
+            ModuleName: class.name.with_suffix("Mod"), // toplevel "InstanceMod" module name
             InstanceName: &class.name,
-            ClassName: container_name("Class"),
-            PrivateClassName: container_name("ClassPrivate"),
+            ClassName: class.name.with_suffix("Class"),
+            PrivateClassName: class.name.with_suffix("ClassPrivate"),
             ParentInstance: &class.parent,
             ParentInstanceFfi: &class.parent_ffi,
             ParentClassFfi: &class.parent_class_ffi,
             GObject: tokens_GObject(),
             GObjectFfi: tokens_GObjectFfi(),
             GObjectClassFfi: tokens_GObjectClassFfi(),
-            InstanceExt: container_name("Ext"), // public trait with all the class's methods
-            InstanceNameFfi: container_name("Ffi"),
+            InstanceExt: class.name.with_suffix("Ext"), // public trait with all the class's methods
+            InstanceNameFfi: class.name.with_suffix("Ffi"),
         }
     }
 
