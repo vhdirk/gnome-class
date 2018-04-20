@@ -20,7 +20,7 @@ quote = { version="0.5.1" }
 rustfmt-nightly = "0.4.2"
 syn = { version="0.13.1", features=["full"] }
 unicode-xid = "0.0.4"
+compiletest_rs = "0.3.10"
 
 [dev-dependencies]
-compiletest_rs = "0.3.10"
 glib-sys = "^0.6.0"

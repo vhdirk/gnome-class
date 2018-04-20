@@ -362,7 +362,7 @@ impl<'ast> ClassContext<'ast> {
                 #(#signal_trampolines)*
             }
 
-            pub use #ModuleName::*;
+            pub use self::#ModuleName::*;
         }
     }
 }
