@@ -4,7 +4,7 @@ use proc_macro2::Term;
 use syn::buffer::Cursor;
 use syn::punctuated::Punctuated;
 use syn::synom::{PResult, Synom};
-use syn::{self, parse_error, Ident, Path, FieldsNamed};
+use syn::{self, parse_error, FieldsNamed, Ident, Path};
 
 use ast;
 use errors::*;
@@ -31,6 +31,8 @@ impl Synom for ast::Item {
         syn!(ast::Class) => { |x| ast::Item::Class(x) }
         |
         syn!(ast::Impl) => { |x| ast::Item::Impl(x) }
+        |
+        syn!(ast::Interface) => { |x| ast::Item::Interface(x) }
     ));
 
     fn description() -> Option<&'static str> {
@@ -69,9 +71,26 @@ impl Synom for ast::Class {
     }
 }
 
+impl Synom for ast::Interface {
+    named!(parse -> Self, do_parse!(
+        call!(keyword("interface")) >>
+        name: syn!(Ident) >>
+        items_and_braces: braces!(many0!(syn!(ast::ImplItem)))  >>
+        (ast::Interface {
+            name: name,
+            items: items_and_braces.1,
+        })
+    ));
+
+    fn description() -> Option<&'static str> {
+        Some("interface item")
+    }
+}
+
 impl Synom for ast::Impl {
     named!(parse -> Self, do_parse!(
         keyword!(impl) >>
+        interface: option!(call!(keyword("interface"))) >>
         trait_: option!(do_parse!(
             path: syn!(Ident) >>
             keyword!(for) >>
@@ -80,6 +99,7 @@ impl Synom for ast::Impl {
         self_path: syn!(Ident) >>
         body: braces!(many0!(syn!(ast::ImplItem))) >>
         (ast::Impl {
+            is_interface: interface.is_some(),
             trait_: trait_,
             self_path: self_path,
             items: body.1
@@ -106,6 +126,8 @@ impl Synom for ast::ImplItem {
 impl Synom for ast::ImplItemKind {
     named!(parse -> Self, alt!(
         syn!(ast::ImplItemMethod) => { |x| ast::ImplItemKind::Method(x) }
+        |
+        syn!(ast::ImplProp) => { |x| ast::ImplItemKind::Prop(x) }
         |
         do_parse!(
             call!(keyword("reserve_slots")) >>
@@ -182,6 +204,65 @@ impl Synom for ast::ImplItemMethod {
     }
 }
 
+impl Synom for ast::ImplProp {
+    named!(parse -> Self, do_parse!(
+        call!(keyword("property")) >>
+
+        name: syn!(syn::Ident) >>
+
+        punct!(:) >>
+        call!(keyword("T")) >>
+        call!(keyword("where")) >>
+        call!(keyword("T")) >>
+        punct!(:) >>
+
+        type_: syn!(syn::Type) >>
+        items_and_braces: braces!(many0!(alt!(
+            do_parse!(
+                call!(keyword("get")) >>
+                parens!(do_parse!(
+                    punct!(&) >>
+                    call!(keyword("self")) >>
+                    ()
+                )) >>
+                punct!(->) >>
+                call!(keyword("T")) >>
+                getter: syn!(syn::Block) >>
+                (ast::ImplPropBlock::Getter(getter))
+            )
+            |
+            do_parse!(
+                call!(keyword("set")) >>
+                param: parens!(do_parse!(
+                    punct!(&) >>
+                    call!(keyword("self")) >>
+                    punct!(,) >>
+                    param: syn!(syn::Ident) >>
+                    punct!(:) >>
+                    call!(keyword("T")) >>
+                    (param)
+                )) >>
+                block: syn!(syn::Block) >>
+                (ast::ImplPropBlock::Setter(
+                    ast::ImplPropSetter{
+                        param: param.1,
+                        block: block
+                    }
+                ))
+            )
+        ))) >>
+        (ast::ImplProp {
+            name: name,
+            type_: type_,
+            items: items_and_braces.1,
+        })
+    ));
+
+    fn description() -> Option<&'static str> {
+        Some("property definition")
+    }
+}
+
 /// Creates a parsing function for use with synom's call!().  For
 /// example, if you need to parse a keyword "foo" as part of a bigger
 /// parser, you could do this:
@@ -213,6 +294,8 @@ pub mod tests {
         parses_plain_impl_item();
         parses_impl_item_with_trait();
         parses_class_with_private_field();
+        parses_impl_interface();
+        parses_interface();
     }
 
     fn assert_tokens_equal<T: ToTokens>(x: &T, s: &str) {
@@ -234,7 +317,8 @@ pub mod tests {
           foo : u32,
           bar : u32,
           baz : u32
-        }";
+        \
+                   }";
         let class = parse_str::<ast::Class>(raw).unwrap();
 
         assert_eq!(class.fields.named.len(), 3);
@@ -260,10 +344,17 @@ pub mod tests {
         }
     }
 
-    fn test_parsing_impl_item(raw: &str, trait_name: Option<&str>, self_name: &str) {
+    fn test_parsing_impl_item(
+        raw: &str,
+        trait_name: Option<&str>,
+        self_name: &str,
+        is_interface: bool,
+    ) {
         let item = parse_str::<ast::Item>(raw).unwrap();
 
         if let ast::Item::Impl(ref impl_) = item {
+            assert_eq!(impl_.is_interface, is_interface);
+
             if let Some(trait_path) = impl_.trait_ {
                 assert_tokens_equal(&trait_path, trait_name.as_ref().unwrap());
             } else {
@@ -277,10 +368,21 @@ pub mod tests {
     }
 
     fn parses_plain_impl_item() {
-        test_parsing_impl_item("impl Foo {}", None, "Foo");
+        test_parsing_impl_item("impl Foo {}", None, "Foo", false);
     }
 
     fn parses_impl_item_with_trait() {
-        test_parsing_impl_item("impl Foo for Bar {}", Some("Foo"), "Bar");
+        test_parsing_impl_item("impl Foo for Bar {}", Some("Foo"), "Bar", false);
+    }
+
+    fn parses_impl_interface() {
+        test_parsing_impl_item("impl interface Foo for Bar {}", Some("Foo"), "Bar", true);
+    }
+
+    fn parses_interface() {
+        let raw = "interface Foo { virtual fn bar(&self); }";
+        let iface = parse_str::<ast::Interface>(raw).unwrap();
+
+        assert_eq!(iface.name.as_ref(), "Foo");
     }
 }

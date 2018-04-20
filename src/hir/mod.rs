@@ -14,7 +14,7 @@ use quote::{ToTokens, Tokens};
 use syn::buffer::TokenBuffer;
 use syn::punctuated::Punctuated;
 use syn::synom::Synom;
-use syn::{self, parse_str, Block, Ident, Path, ReturnType, Field};
+use syn::{self, parse_str, Block, Field, Ident, Path, ReturnType, Type};
 
 use super::ast;
 use super::checking::*;
@@ -23,11 +23,17 @@ use super::glib_utils::*;
 
 pub struct Program<'ast> {
     pub classes: Classes<'ast>,
+    pub interfaces: Interfaces<'ast>,
 }
 
 pub struct Classes<'ast> {
     items: HashMap<Ident, Class<'ast>>,
 }
+
+pub struct Interfaces<'ast> {
+    items: HashMap<Ident, Interface<'ast>>,
+}
+
 #[cfg_attr(rustfmt, rustfmt_skip)]
 pub struct Class<'ast> {
     pub name: Ident, // Foo
@@ -44,15 +50,35 @@ pub struct Class<'ast> {
     // The order of these is important; it's the order of the slots in FooClass
     pub slots: Vec<Slot<'ast>>,
     // pub n_reserved_slots: usize,
-    //
-    // pub properties: Vec<Property>,
+
+    pub properties: Vec<Property<'ast>>,
     pub overrides: HashMap<Ident, Vec<Method<'ast>>>,
+}
+
+pub struct Interface<'ast> {
+    pub name: Ident, // Foo
+
+    // The order of these is important; it's the order of the slots in FooIface
+    pub slots: Vec<Slot<'ast>>,
+    // pub n_reserved_slots: usize,
 }
 
 pub enum Slot<'ast> {
     Method(Method<'ast>),
     VirtualMethod(VirtualMethod<'ast>),
     Signal(Signal<'ast>),
+}
+
+pub struct Property<'ast> {
+    pub name: Ident,
+    pub type_: &'ast Type,
+    pub getter: &'ast Block,
+    pub setter: PropertySetterBlock<'ast>,
+}
+
+pub struct PropertySetterBlock<'ast> {
+    pub param: Ident,
+    pub body: &'ast Block,
 }
 
 pub struct Method<'ast> {
@@ -156,7 +182,15 @@ impl<'ast> Program<'ast> {
             classes.add_impl(impl_)?;
         }
 
-        Ok(Program { classes })
+        let mut interfaces = Interfaces::new();
+        for iface in ast.interfaces() {
+            interfaces.add(iface)?;
+        }
+
+        Ok(Program {
+            classes,
+            interfaces,
+        })
     }
 }
 
@@ -187,6 +221,7 @@ impl<'ast> Classes<'ast> {
                 implements: Vec::new(),
                 private_fields: ast_class.fields.named.iter().collect(),
                 slots: Vec::new(),
+                properties: Vec::new(),
                 overrides: HashMap::new(),
             },
         );
@@ -201,13 +236,20 @@ impl<'ast> Classes<'ast> {
             Some(class) => class,
             None => bail!("impl for class that doesn't exist: {}", impl_.self_path),
         };
-        match impl_.trait_ {
-            Some(parent_class) => {
+        match *impl_ {
+            ast::Impl {
+                is_interface: false,
+                trait_: Some(parent_class),
+                ..
+            } => {
                 for item in impl_.items.iter() {
                     let item = match item.node {
                         ast::ImplItemKind::Method(ref m) => m,
                         ast::ImplItemKind::ReserveSlots(_) => {
                             bail!("can't reserve slots in a parent class impl");
+                        }
+                        ast::ImplItemKind::Prop(_) => {
+                            bail!("can't define props in a parent class impl");
                         }
                     };
                     if item.signal.is_some() {
@@ -240,12 +282,33 @@ impl<'ast> Classes<'ast> {
                         .push(method);
                 }
             }
-            None => {
+
+            ast::Impl {
+                is_interface: false,
+                trait_: None,
+                ..
+            } => {
                 for item in impl_.items.iter() {
-                    let slot = class.translate_slot(item)?;
-                    class.slots.push(slot);
+                    match item.node {
+                        ast::ImplItemKind::Prop(_) => {
+                            let property = class.translate_property(item)?;
+                            class.properties.push(property);
+                        }
+                        _ => {
+                            let slot = class.translate_slot(item)?;
+                            class.slots.push(slot);
+                        }
+                    }
                 }
             }
+
+            ast::Impl {
+                is_interface: true,
+                trait_: Some(_parent_class),
+                ..
+            } => unimplemented!(),
+
+            _ => unreachable!(),
         }
 
         Ok(())
@@ -264,6 +327,7 @@ impl<'ast> Class<'ast> {
             ast::ImplItemKind::ReserveSlots(ref _slots) => {
                 panic!("reserve slots not implemented");
             }
+            ast::ImplItemKind::Prop(_) => unreachable!(),
         }
     }
 
@@ -449,6 +513,72 @@ impl<'ast> Class<'ast> {
             }
             _other => Ok(Ty::Owned(t)),
         }
+    }
+
+    fn translate_property(&mut self, item: &'ast ast::ImplItem) -> Result<Property<'ast>> {
+        assert_eq!(item.attrs.len(), 0); // attributes unimplemented
+        if let ast::ImplItemKind::Prop(ref prop) = item.node {
+            let name = prop.name;
+            let type_ = &prop.type_;
+
+            let getter = match prop.getter() {
+                Some(&ast::ImplPropBlock::Getter(ref b)) => b,
+                None => bail!("property without getter: {}", name),
+                _ => bail!("invalid property getter: {}", name),
+            };
+
+            let setter = match prop.setter() {
+                Some(ast::ImplPropBlock::Setter(ref b)) => PropertySetterBlock {
+                    param: b.param,
+                    body: &b.block,
+                },
+                None => bail!("property without setter: {}", name),
+                _ => bail!("invalid property setter: {}", name),
+            };
+
+            return Ok(Property {
+                name,
+                type_,
+                getter,
+                setter,
+            });
+        }
+
+        bail!("Invalid definition inside property");
+    }
+}
+
+impl<'ast> Interfaces<'ast> {
+    fn new() -> Interfaces<'ast> {
+        Interfaces {
+            items: HashMap::new(),
+        }
+    }
+
+    pub fn len(&self) -> usize {
+        self.items.len()
+    }
+
+    pub fn get(&self, name: &str) -> &Interface {
+        self.items.iter().find(|c| c.1.name == name).unwrap().1
+    }
+
+    fn add(&mut self, ast_iface: &'ast ast::Interface) -> Result<()> {
+        let prev = self.items.insert(
+            ast_iface.name,
+            Interface {
+                name: ast_iface.name,
+                slots: Vec::new(),
+            },
+        );
+        if prev.is_some() {
+            bail!("redefinition of interface `{}`", ast_iface.name);
+        }
+        Ok(())
+    }
+
+    pub fn iter<'a>(&'a self) -> impl Iterator<Item = &'a Interface> + 'a {
+        self.items.values()
     }
 }
 

@@ -115,11 +115,18 @@ gnome_class! {
     // should we list SomeInterface in the "class" line above?
     // Pros: makes it obvious at a glance what interfaces are implemented
     // Cons: a little duplication
-    impl SomeInterface for Foo {
+    //
+    // We have "impl interface" because if we just have the user's SomeInterface,
+    // we don't know if it corresponds to a class whose methods we are overriding,
+    // or to an interface that we want to implement.  So, with "impl interface"
+    // we make this unambiguous.
+    impl interface SomeInterface for Foo {
         virtual fn blah(&self, ...) {
         }
     }
     
-    // FIXME: we need syntax to define new GTypeInterfaces
+    interface Blah: RequiredClass + RequiredIface + RequiredIface {
+        virtual fn blah(&self, ...);
+    }
 }
 ```

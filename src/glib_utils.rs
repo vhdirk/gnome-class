@@ -100,19 +100,34 @@ pub mod tests {
             lower_case_instance_name("SnakeCaseSlidingThroughTheGrass")
         );
         assert_eq!("", lower_case_instance_name(""));
-        assert_eq!("ifyoureallywantto", lower_case_instance_name("ifyoureallywantto"));
-        assert_eq!("if_you_really_want_to", lower_case_instance_name("if_you_really_want_to"));
+        assert_eq!(
+            "ifyoureallywantto",
+            lower_case_instance_name("ifyoureallywantto")
+        );
+        assert_eq!(
+            "if_you_really_want_to",
+            lower_case_instance_name("if_you_really_want_to")
+        );
     }
 
     fn lower_cases_non_ascii_names() {
         assert_eq!("y̆es", lower_case_instance_name("Y̆es"));
-        assert_eq!("trying_this_y̆es_y̆es", lower_case_instance_name("TryingThisY̆esY̆es"));
-        assert_eq!("y̆es_y̆es_trying_this", lower_case_instance_name("Y̆esY̆esTryingThis"));
+        assert_eq!(
+            "trying_this_y̆es_y̆es",
+            lower_case_instance_name("TryingThisY̆esY̆es")
+        );
+        assert_eq!(
+            "y̆es_y̆es_trying_this",
+            lower_case_instance_name("Y̆esY̆esTryingThis")
+        );
     }
 
     fn lower_cases_with_sequential_uppercase_characters() {
         assert_eq!("gtk_rbtree", lower_case_instance_name("GtkRBTree"));
-        assert_eq!("rbtree_internals", lower_case_instance_name("RBTreeInternals"));
+        assert_eq!(
+            "rbtree_internals",
+            lower_case_instance_name("RBTreeInternals")
+        );
 
         // This may or may not be what we want, but for now this is the behavior that we expect.
         assert_eq!("gtkrbtree", lower_case_instance_name("GTKRBTree"));
