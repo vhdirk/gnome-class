@@ -36,13 +36,6 @@ impl<'ast> ClassContext<'ast> {
         // If our instance name is "Foo" and we have a suffix "Bar", generates a
         // "FooBar" Ident.  These are used for the generated module name,
         // instance/class struct names, etc.
-        //
-        // Note that we switch the spans of all identifiers to be
-        // `Span::call_site` which differs from what `syn` does upstream which
-        // is to use `Span::default` (currently). This is sort of a...
-        //
-        // FIXME(rust-lang/rust#45934) we should be able to use vanilla upstream
-        // `syn` ideally, but it's not clear how that would change, if at all
         let container_name = |suffix: &str| {
             Ident::new(
                 &format!("{}{}", class.name.as_ref(), suffix),
