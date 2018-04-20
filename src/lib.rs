@@ -63,7 +63,7 @@ mod parser;
 ///     impl Foo {
 ///         pub fn a_static_method(&self) {
 ///             // self.get_priv() gives us access to the private
-                // fields declared in class Foo
+// fields declared in class Foo
 ///             do_something_with_u32(self.get_priv().private_field.get());
 ///         }
 ///
@@ -143,17 +143,16 @@ mod parser;
 ///
 #[proc_macro]
 pub fn gobject_gen(input: TokenStream) -> TokenStream {
-    let ast_program =
-        match parser::parse_program(input) {
-            Ok(p) => p,
-            Err(e) => {
-                let desc = e.to_string();
+    let ast_program = match parser::parse_program(input) {
+        Ok(p) => p,
+        Err(e) => {
+            let desc = e.to_string();
 
-                return quote! {
-                    compile_error!(#desc);
-                }.into();
-            }
-        };
+            return quote! {
+                compile_error!(#desc);
+            }.into();
+        }
+    };
 
     let result: Result<quote::Tokens> = (|| {
         let program = hir::Program::from_ast_program(&ast_program)?;

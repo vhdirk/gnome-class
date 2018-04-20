@@ -53,7 +53,7 @@ impl<'ast> ClassContext<'ast> {
         let signal_trampolines = self.signal_trampolines();
 
         let properties_enum = self.properties_enum();
-        //let properties_setters = &self.properties_setter();
+        // let properties_setters = &self.properties_setter();
 
         let parent_instance_tokens = if self.class.gobject_parent {
             quote_cs!{}

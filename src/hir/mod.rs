@@ -14,7 +14,7 @@ use quote::{ToTokens, Tokens};
 use syn::buffer::TokenBuffer;
 use syn::punctuated::Punctuated;
 use syn::synom::Synom;
-use syn::{self, parse_str, Block, Ident, Path, ReturnType, Field, Type};
+use syn::{self, parse_str, Block, Field, Ident, Path, ReturnType, Type};
 
 use super::ast;
 use super::checking::*;
@@ -262,7 +262,7 @@ impl<'ast> Classes<'ast> {
                         ast::ImplItemKind::Prop(_) => {
                             let property = class.translate_property(item)?;
                             class.properties.push(property);
-                        },
+                        }
                         _ => {
                             let slot = class.translate_slot(item)?;
                             class.slots.push(slot);
@@ -489,17 +489,20 @@ impl<'ast> Class<'ast> {
             };
 
             let setter = match prop.setter() {
-                Some(ast::ImplPropBlock::Setter(ref b)) => {
-                    PropertySetterBlock {
-                        param: b.param,
-                        body: &b.block,
-                    }
+                Some(ast::ImplPropBlock::Setter(ref b)) => PropertySetterBlock {
+                    param: b.param,
+                    body: &b.block,
                 },
                 None => bail!("property without setter: {}", name),
                 _ => bail!("invalid property setter: {}", name),
             };
 
-            return Ok(Property { name, type_, getter, setter });
+            return Ok(Property {
+                name,
+                type_,
+                getter,
+                setter,
+            });
         }
 
         bail!("Invalid definition inside property");

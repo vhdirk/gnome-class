@@ -4,7 +4,7 @@ use proc_macro2::Term;
 use syn::buffer::Cursor;
 use syn::punctuated::Punctuated;
 use syn::synom::{PResult, Synom};
-use syn::{self, parse_error, Ident, Path, FieldsNamed};
+use syn::{self, parse_error, FieldsNamed, Ident, Path};
 
 use ast;
 use errors::*;
@@ -295,7 +295,8 @@ pub mod tests {
           foo : u32,
           bar : u32,
           baz : u32
-        }";
+        \
+                   }";
         let class = parse_str::<ast::Class>(raw).unwrap();
 
         assert_eq!(class.fields.named.len(), 3);

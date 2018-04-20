@@ -3,7 +3,7 @@
 use proc_macro2::Term;
 use syn::punctuated::Punctuated;
 use syn::{Attribute, Lit};
-use syn::{Block, FnArg, Ident, Path, ReturnType, FieldsNamed, Type};
+use syn::{Block, FieldsNamed, FnArg, Ident, Path, ReturnType, Type};
 
 pub struct Program {
     pub items: Vec<Item>,
@@ -47,7 +47,7 @@ pub fn get_program_classes<'a>(program: &'a Program) -> Vec<&'a Class> {
 pub struct Class {
     pub name: Ident,
     pub extends: Option<Path>,
-    pub fields: FieldsNamed
+    pub fields: FieldsNamed,
 }
 
 // similar to syn::ItemImpl
