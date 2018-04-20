@@ -576,6 +576,10 @@ impl<'ast> Interfaces<'ast> {
         }
         Ok(())
     }
+
+    pub fn iter<'a>(&'a self) -> impl Iterator<Item = &'a Interface> + 'a {
+        self.items.values()
+    }
 }
 
 fn make_path_glib_object() -> Path {

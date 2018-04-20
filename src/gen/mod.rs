@@ -7,11 +7,13 @@ mod boilerplate;
 mod class;
 mod cstringident;
 mod imp;
+mod interface;
 mod instance_ext;
 mod signals;
 mod signatures;
 
 use self::class::ClassContext;
+use self::interface::InterfaceContext;
 use errors::*;
 use hir::Program;
 
@@ -24,5 +26,19 @@ pub fn codegen(program: &Program) -> Result<Tokens> {
             cx.gen_class()
         })
         .collect::<Result<Vec<_>>>()?;
-    Ok(quote_cs! { #(#class_tokens)* })
+
+    let interface_tokens = program
+        .interfaces
+        .iter()
+        .map(|iface| {
+            let cx = InterfaceContext::new(program, iface);
+            cx.gen_interface()
+        })
+        .collect::<Result<Vec<_>>>()?;
+
+    Ok(quote_cs! {
+        #(#class_tokens)*
+
+        #(#interface_tokens)*
+    })
 }
