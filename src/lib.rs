@@ -11,7 +11,7 @@ extern crate error_chain;
 extern crate quote;
 extern crate proc_macro;
 extern crate proc_macro2;
-extern crate rustfmt;
+extern crate rustfmt_nightly as rustfmt;
 extern crate unicode_xid;
 
 #[macro_use]
