@@ -154,10 +154,9 @@ pub fn gobject_gen(input: TokenStream) -> TokenStream {
         }
     };
 
-    let result: Result<quote::Tokens> = (|| {
-        let program = hir::Program::from_ast_program(&ast_program)?;
-        gen::codegen(&program)
-    })();
+    let result: Result<quote::Tokens> =
+        hir::Program::from_ast_program(&ast_program)
+        .and_then(|program| Ok(gen::codegen(&program)));
 
     match result {
         Ok(tokens) => {

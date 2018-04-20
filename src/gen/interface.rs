@@ -3,7 +3,6 @@
 
 use quote::Tokens;
 
-use errors::*;
 use hir::{Interface, Program};
 
 pub struct InterfaceContext<'ast> {
@@ -19,8 +18,8 @@ impl<'ast> InterfaceContext<'ast> {
         }
     }
 
-    pub fn gen_interface(&self) -> Result<Tokens> {
-        Ok(self.gen_boilerplate())
+    pub fn gen_interface(&self) -> Tokens {
+        self.gen_boilerplate()
     }
 
     fn gen_boilerplate(&self) -> Tokens {

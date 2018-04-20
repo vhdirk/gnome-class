@@ -5,7 +5,6 @@ use proc_macro2::Span;
 use quote::{ToTokens, Tokens};
 use syn::Ident;
 
-use errors::*;
 use glib_utils::*;
 use hir::{Class, Program};
 
@@ -70,8 +69,8 @@ impl<'ast> ClassContext<'ast> {
         }
     }
 
-    pub fn gen_class(&self) -> Result<Tokens> {
-        Ok(self.gen_boilerplate())
+    pub fn gen_class(&self) -> Tokens {
+        self.gen_boilerplate()
     }
 
     pub fn exported_fn_name(&self, method_name: &str) -> Ident {

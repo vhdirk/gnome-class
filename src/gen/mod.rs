@@ -14,10 +14,9 @@ mod signatures;
 
 use self::class::ClassContext;
 use self::interface::InterfaceContext;
-use errors::*;
 use hir::Program;
 
-pub fn codegen(program: &Program) -> Result<Tokens> {
+pub fn codegen(program: &Program) -> Tokens {
     let class_tokens = program
         .classes
         .iter()
@@ -25,7 +24,7 @@ pub fn codegen(program: &Program) -> Result<Tokens> {
             let cx = ClassContext::new(program, class);
             cx.gen_class()
         })
-        .collect::<Result<Vec<_>>>()?;
+        .collect::<Vec<_>>();
 
     let interface_tokens = program
         .interfaces
@@ -34,11 +33,11 @@ pub fn codegen(program: &Program) -> Result<Tokens> {
             let cx = InterfaceContext::new(program, iface);
             cx.gen_interface()
         })
-        .collect::<Result<Vec<_>>>()?;
+        .collect::<Vec<_>>();
 
-    Ok(quote_cs! {
+    quote_cs! {
         #(#class_tokens)*
 
         #(#interface_tokens)*
-    })
+    }
 }
