@@ -13,7 +13,7 @@ extern crate libc;
 use gobject_gen::gobject_gen;
 
 gobject_gen! {
-    interface Foo {
-        virtual fn foo(&self);
+    interface Frob {
+        virtual fn frob(&self);
     }
 }
